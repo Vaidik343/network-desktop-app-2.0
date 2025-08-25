@@ -1,0 +1,21 @@
+directories:
+  output: dist
+  buildResources: assets
+appId: com.dcscan.network
+productName: DC Scan Network
+files:
+  - filter:
+      - '**/*'
+      - assets/bootstrap/**/*
+      - node_modules/oui/**/*
+      - node_modules/mac-lookup/**/*
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DC Scan Network
+electronVersion: 37.2.6
