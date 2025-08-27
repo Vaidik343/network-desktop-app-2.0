@@ -1,86 +1,222 @@
+// 🌐 DOM Elements
 const scanBtn = document.getElementById("scanBtn");
 const excelBtn = document.getElementById("excelBtn");
 const searchInput = document.getElementById("searchInput");
 const cardContainer = document.getElementById("card-container");
 const emptyMessage = document.getElementById("emptyMessage");
 const modalBody = document.getElementById("deviceModalBody");
+const cardBtn = document.getElementById("cardViewBtn");
+const tableBtn = document.getElementById("tableViewBtn");
+// Import statements will be handled via require in Electron
 
+// 📦 Modal and Device Functions
+function showDeviceDetails(device) {
+  const modalBody = document.getElementById("deviceModalBody");
+  modalBody.innerHTML = `
+    <h4>${device.ip || "Unknown"}</h4>
+    <p><strong>Status:</strong> ${device.alive ? "Online" : "Offline"}</p>
+    <p><strong>Hostname:</strong> ${device.hostname || "Unknown"}</p>
+    <p><strong>Vendor:</strong> ${device.vendor || "Unknown"}</p>
+    <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
+    <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
+    <p><strong>Response Time:</strong> ${device.responseTime || "Unknown"} ms</p>
+    <p><strong>Version:</strong> ${device.version || "Unknown"}</p>
+    <p><strong>Build:</strong> ${device.build || "Unknown"}</p>
+    <p><strong>Model:</strong> ${device.model || "Unknown"}</p>
+  `;
+
+  const modalElement = document.getElementById("deviceModal");
+  let deviceModal = bootstrap.Modal.getInstance(modalElement);
+  if (!deviceModal) deviceModal = new bootstrap.Modal(modalElement);
+  deviceModal.show();
+}
+
+async function handleFetch(deviceOrIp) {
+  try {
+    // Handle both device object and IP string
+    const ip = typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp.ip;
+    const device = typeof deviceOrIp === 'string' ? { ip: deviceOrIp } : deviceOrIp;
+    
+    console.log(`Attempting to fetch system info for IP: ${ip}`);
+    
+    // For now, just show the device details without API call
+    // The API functionality can be added later if needed
+    showDeviceDetails(device);
+  } catch (error) {
+    console.error("Device fetch failed:", error);
+    alert(`Could not fetch system info from ${typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp.ip}. Error: ${error.message}`);
+  }
+}
+
+// 📦 State
 let currentData = [];
-console.log("🚀 ~ currentData:", currentData)
+let currentView = localStorage.getItem("viewMode") || "card";
 
-// 🔍 Render device cards
-function renderCards(data) {
+// 🔄 View Toggle
+cardBtn.addEventListener("click", () => {
+  currentView = "card";
+  updateViewToggle();
+  renderDevices(currentData);
+});
+
+tableBtn.addEventListener("click", () => {
+  currentView = "table";
+  updateViewToggle();
+  renderDevices(currentData);
+});
+
+function updateViewToggle() {
+  cardBtn.classList.toggle("active", currentView === "card");
+  tableBtn.classList.toggle("active", currentView === "table");
+  localStorage.setItem("viewMode", currentView);
+}
+
+// 🧠 Unified Renderer
+function renderDevices(devices) {
+  console.log("renderDevices called with:", devices?.length, "devices");
+  console.log("Current view:", currentView);
+  
+  const tableContainer = document.getElementById("table-container");
+
+  // 🔄 Toggle visibility based on current view
+  cardContainer.style.display = currentView === "card" ? "flex" : "none";
+  tableContainer.style.display = currentView === "table" ? "block" : "none";
+
+  // Clear both containers
   cardContainer.innerHTML = "";
+  tableContainer.innerHTML = "";
 
-  if (!data || data.length === 0) {
+  if (!devices || devices.length === 0) {
+    console.log("No devices to render, showing empty message");
     emptyMessage.style.display = "block";
     return;
   }
 
+  console.log("Rendering", devices.length, "devices in", currentView, "view");
   emptyMessage.style.display = "none";
+  currentView === "card" ? renderCards(devices) : renderTable(devices);
+}
 
-  data.forEach((device) => {
-    const card = document.createElement("div");
-    card.className = "col-sm-12 col-md-6 col-lg-4";
 
-    card.innerHTML = `
-      <div class="card h-100 shadow-sm" style="cursor:pointer;">
-        <div class="card-body">
-          <h5 class="card-title text-primary ip-cell" data-ip="${device.ip}" title="Open in browser">${device.ip}</h5>
-          <p class="card-text mb-1"><strong>MAC:</strong> ${device.mac || "Unknown"}</p>
-          <p class="card-text mb-1"><strong>Type:</strong> ${device.type || "Unknown"}</p>
-      
+// 🧩 Card Renderer
+function renderCards(data) {
+  console.log("renderCards called with", data.length, "devices");
+  data.forEach((device, index) => {
+    console.log(`Rendering device ${index + 1}:`, device);
+    const col = document.createElement("div");
+    col.className = "col-sm-12 col-md-6 col-lg-3 d-flex ";
+
+    col.innerHTML = `
+      <div class="e-card playing">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="infotop">
+          <p class="ip-cell text-primary mb-2 cardText" data-ip="${device.ip}"
+           style="cursor:pointer;" title="Open in browser"><strong>IP:</strong> ${device.ip}</p>
+          <p><strong>MAC:</strong> ${device.mac || "Unknown"}</p>
+          <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
+          
         </div>
       </div>
     `;
 
-    // 📌 Full card click: show device details
-    card.querySelector(".card").addEventListener("click", () => {
-      showDeviceDetails(device);
+    // Clicking card opens modal
+    col.querySelector(".e-card").addEventListener("click", () => showDeviceDetails(device));
+
+    // Clicking IP opens in browser
+    col.querySelector(".ip-cell").addEventListener("click", (e) => {
+      e.stopPropagation();
+      handleFetch(device.ip);
     });
 
-    // 🌐 IP click: open in browser
-    card.querySelector(".ip-cell").addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent triggering card click
-      const ip = e.target.getAttribute("data-ip");
-      window.api.openIP(ip);
-    });
-
-    cardContainer.appendChild(card);
+    cardContainer.appendChild(col);
   });
 }
 
-// 📊 Show device details in modal
-function showDeviceDetails(result) {
-  console.log("🚀 ~ showDeviceDetails ~ result:", result);
 
-  const modalBody = document.getElementById("deviceModalBody");
-  if (!modalBody) {
-  console.error("❌ Modal body element not found!");
-  return;
-}
-  modalBody.innerHTML = `
-    <h4>${result.ip || "Unknown"}</h4>
-    <p><strong>Status:</strong> ${result.alive ? "Online" : "Offline"}</p>
-    
-    <p><strong>Hostname:</strong> ${result.hostname || "Unknown"}</p>
-    <p><strong>Vendor:</strong> ${result.vendor || "Unknown"}</p>
-    
-    <p><strong>Open Ports:</strong> ${result.openPorts?.join(", ") || "None"}</p>
-    <p><strong>Response Time:</strong> ${result.responseTime || "Unknown"} ms</p>
+// 📊 Table Renderer
+function renderTable(data) {
+  const tableContainer = document.getElementById("table-container");
+  tableContainer.innerHTML = ""; // Clear previous table
+
+  const tableWrapper = document.createElement("div");
+  tableWrapper.className = "table-responsive";
+
+  const table = document.createElement("table");
+  table.className = "table table-bordered table-hover align-middle";
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th scope="col">IP Address</th>
+        <th scope="col">MAC Address</th>
+        <th scope="col">Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${data.map(device => `
+        <tr class="device-row" data-ip="${device.ip}">
+          <td class="ip-cell text" title="Open in browser">${device.ip}</td>
+          <td>${device.mac || "Unknown"}</td>
+          <td>${device.type || "Unknown"}</td>
+        </tr>
+      `).join("")}
+    </tbody>
   `;
 
+  tableWrapper.appendChild(table);
+  tableContainer.appendChild(tableWrapper); // ✅ Correct target
 
-   const deviceModal = new bootstrap.Modal(document.getElementById("deviceModal"));
-  deviceModal.show();
+  table.querySelectorAll(".ip-cell").forEach(cell => {
+    cell.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const ip = cell.textContent;
+      const device = data.find(d => d.ip === ip);
+      if (device) {
+        handleFetch(device);
+      }
+    });
+  });
+
+  table.querySelectorAll(".device-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const ip = row.getAttribute("data-ip");
+      const device = data.find(d => d.ip === ip);
+      if (device) showDeviceDetails(device);
+    });
+  });
 }
 
-// 🚀 Initial scan on load
+// 📌 Modal Renderer
+// function showDeviceDetails(device) {
+//   modalBody.innerHTML = `
+//     <h4>${device.ip || "Unknown"}</h4>
+//     <p><strong>Status:</strong> ${device.alive ? "Online" : "Offline"}</p>
+//     <p><strong>Hostname:</strong> ${device.hostname || "Unknown"}</p>
+//     <p><strong>Vendor:</strong> ${device.vendor || "Unknown"}</p>
+//     <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
+//     <p><strong>Response Time:</strong> ${device.responseTime || "Unknown"} ms</p>
+//   `;
+
+//   const modalElement = document.getElementById("deviceModal");
+//   let deviceModal = bootstrap.Modal.getInstance(modalElement);
+//   if (!deviceModal) deviceModal = new bootstrap.Modal(modalElement);
+//   deviceModal.show();
+// }
+
+// 🚀 Initial Scan
 window.addEventListener("DOMContentLoaded", async () => {
   try {
+    console.log("Starting initial scan...");
     const devices = await window.api.scanDevices();
+    console.log("Scan completed, devices found:", devices.length);
+    console.log("Sample device:", devices[0]);
+    
     currentData = devices;
-    renderCards(devices);
+    window.currentData = devices;
+    updateViewToggle();
+    renderDevices(devices);
   } catch (err) {
     console.error("Initial scan failed:", err);
     emptyMessage.textContent = "Failed to load devices.";
@@ -88,19 +224,25 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// 🔄 Manual scan
+// 🔄 Manual Scan
 scanBtn.addEventListener("click", async () => {
+  scanBtn.disabled = true;
+  scanBtn.textContent = "Scanning...";
   try {
     const devices = await window.api.scanDevices();
     currentData = devices;
-    renderCards(devices);
+    window.currentData = devices;
+    renderDevices(devices);
   } catch (err) {
     console.error("Scan failed:", err);
     alert("Failed to scan network.");
+  } finally {
+    scanBtn.disabled = false;
+    scanBtn.textContent = "Scan Network";
   }
 });
 
-//  Search filter
+// 🔍 Search Filter
 searchInput.addEventListener("input", () => {
   const query = searchInput.value.toLowerCase();
   const filtered = currentData.filter(
@@ -109,13 +251,12 @@ searchInput.addEventListener("input", () => {
       d.mac?.toLowerCase().includes(query) ||
       d.hostname?.toLowerCase().includes(query)
   );
-  renderCards(filtered);
+  renderDevices(filtered);
 });
 
-//  Export to Excel
+// 📁 Export to Excel
 excelBtn.addEventListener("click", async () => {
   const query = searchInput.value.toLowerCase();
-
   const filtered = currentData.filter(
     (d) =>
       d.ip.toLowerCase().includes(query) ||
@@ -129,7 +270,7 @@ excelBtn.addEventListener("click", async () => {
   }
 
   try {
-    const filePath = await window.api.exportExcel(filtered); // IPC call to main
+    const filePath = await window.api.exportExcel(filtered);
     if (filePath) {
       alert(`Excel file saved at:\n${filePath}`);
     } else {

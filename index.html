@@ -35,19 +35,25 @@
           <div class="logo">
 
           </div>
-          <div class="d-flex justify-content-end  mb-3 twoBtn">
+          <div class="d-flex justify-content-end  mb-1 twoBtn">
             <!-- <img src="assets/applogo.png" alt="DC Scan Network"/> -->
+               <div class="view-toggle d-flex align-items-center gap-1">
+    <img src="assets/icons/visualization.png" id="cardViewBtn" title="Card View" class="view-icon" />
+    <img src="assets/icons/cellsColor.png" id="tableViewBtn" title="Table View" class="view-icon" />
+  </div>
             <button id="scanBtn" class="btn btn-primary ">Scan Network</button>
             <button id="excelBtn" class="btn btn-success">Export to Excel</button>
           </div>
           <form id="searchForm" class="mb-3">
-            <input id="searchInput" type="text" class="form-control" placeholder="Search IP / MAC / Hostname">
+            <input id="searchInput" type="text" class="form-control" placeholder="Search IP / MAC">
           </form>
 
         </div>
-        <div id="card-container" class="row g-4">
+        <div id="card-container" class="row g-2">
           <div class="col-12 text-center text-muted" id="emptyMessage">No data yet.</div>
         </div>
+<div id="table-container" class="mt-4" ></div>
+
 
   </div>
 
@@ -64,6 +70,7 @@
     </div>
   </div>
 </div>
+
 
 
 </main>

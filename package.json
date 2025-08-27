@@ -15,27 +15,36 @@
     "electron-builder": "^26.0.12"
   },
   "dependencies": {
+    "electron-log": "^5.4.3",
     "exceljs": "^4.4.0",
+    "ip": "^2.0.1",
     "mac-lookup": "^1.0.1",
     "nsis": "^0.0.0",
     "oui": "^13.0.5",
     "ping": "^0.4.4",
     "xlsx": "^0.18.5"
   },
-"build": {
-  "appId": "com.dcscan.network",
-  "productName": "DC Scan Network",
-  "files": [
-    "**/*",
-    "assets/bootstrap/**/*",
-     "node_modules/oui/**/*",
-  "node_modules/mac-lookup/**/*"
-  ],
+  "build": {
+    "appId": "com.dcscan.network",
+    "productName": "DC Scan Network",
+    "files": [
+      "**/*",
+      "assets/bootstrap/**/*",
+      "assets/data/oui.txt",
+      "assets/"
+    ],
+    "asarUnpack": [
+      "node_modules/oui/**/*",
+      "node_modules/mac-lookup/**/*",
+      "assets/data/**/*"
+      
+    ],
     "directories": {
       "buildResources": "assets"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,

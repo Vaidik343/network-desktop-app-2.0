@@ -1,17 +1,20 @@
-const { lookupVendor,normalizeMac  } = require("./utils/arpUtils");
+const { lookupVendor, normalizeMac } = require("./utils/arpUtils");
+const { enrichDevice } = require("./utils/deviceUtils");
 const { exec } = require("child_process");
 const os = require("os");
 const dns = require("dns");
 const util = require("util");
 const ping = require("ping");
 const net = require("net");
-
+const { scanSubnet } = require("./subnetScanner");
 const reverseLookup = util.promisify(dns.reverse);
-
+const ip = require("ip")
+const log = require('electron-log');
 // 🧠 Parse ARP output based on platform
 function parseARP(output) {
   const lines = output.split("\n").filter(line => line.trim());
   const devices = [];
+  console.log("🚀 ~ parseARP ~ devices:", devices)
 
   for (const line of lines) {
     let ip, mac;
@@ -37,26 +40,6 @@ function parseARP(output) {
 
   return devices;
 }
-
-// 🔍 Guess device type based on vendor + TTL + ports
-function detectDeviceType(mac, vendor) {
-  const v = (vendor || "Unknown").toLowerCase();
-
-  if (v.includes("apple") || v.includes("iphone") || v.includes("ipad")) {
-    return "Phone / Tablet";
-  }
-  if (v.includes("samsung")) return "Phone / TV";
-  if (v.includes("cisco") || v.includes("juniper")) return "Switch / Router";
-  if (v.includes("hikvision") || v.includes("dahua")) return "IP Camera";
-  if (v.includes("intel") || v.includes("amd") || v.includes("lenovo") || v.includes("dell"))
-    return "Computer";
-  if (v.includes("tp-link") || v.includes("netgear") || v.includes("d-link"))
-    return "Network Device";
-
-  // fallback
-  return "Unknown";
-}
-
 
 // ⚡ Quick port scanner (few common ports)
 async function scanPorts(ip, ports = [80, 443, 22, 23, 554, 3389, 9100]) {
@@ -89,26 +72,14 @@ async function scanPorts(ip, ports = [80, 443, 22, 23, 554, 3389, 9100]) {
   return open;
 }
 
-// 🌐 Enrich device with ping, hostname, vendor, type
-async function enrichDevice(device) {
-  const vendor = lookupVendor(device.mac) || "Unknown";
-  const type = detectDeviceType(device.mac, vendor);
-
-  return {
-    ip: device.ip || "Unknown",
-    mac: device.mac ? normalizeMac(device.mac) : "Unknown",
-    alive: device.alive || false,
-    hostname: device.hostname || "Unknown",
-    vendor,
-    type,
-    openPorts: device.openPorts || [],
-    responseTime: device.responseTime || "unknown",
-  };
-}
-
 
 // 🚀 Main scan function
-module.exports = function scanDevices() {
+module.exports =  function scanDevices({ useSubnetScan = false, ipAddr, netmask } = {}) {
+  if (useSubnetScan && ipAddr && netmask) {
+    return scanSubnet(ipAddr, netmask);
+  }
+
+  // fallback to ARP scan
   return new Promise((resolve, reject) => {
     const command = os.platform() === "win32" ? "arp -a" : "arp -n";
 
@@ -126,3 +97,4 @@ module.exports = function scanDevices() {
     });
   });
 };
+
