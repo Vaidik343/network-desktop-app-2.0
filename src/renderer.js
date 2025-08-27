@@ -13,16 +13,35 @@ const tableBtn = document.getElementById("tableViewBtn");
 function showDeviceDetails(device) {
   const modalBody = document.getElementById("deviceModalBody");
   modalBody.innerHTML = `
-    <h4>${device.ip || "Unknown"}</h4>
-    <p><strong>Status:</strong> ${device.alive ? "Online" : "Offline"}</p>
-    <p><strong>Hostname:</strong> ${device.hostname || "Unknown"}</p>
-    <p><strong>Vendor:</strong> ${device.vendor || "Unknown"}</p>
-    <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
-    <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
-    <p><strong>Response Time:</strong> ${device.responseTime || "Unknown"} ms</p>
-    <p><strong>Version:</strong> ${device.version || "Unknown"}</p>
-    <p><strong>Build:</strong> ${device.build || "Unknown"}</p>
-    <p><strong>Model:</strong> ${device.model || "Unknown"}</p>
+    <div class="row">
+      <div class="col-md-6">
+        <h4>${device.ip || "Unknown"}</h4>
+        <hr>
+        <h6>Basic Information</h6>
+        <p><strong>Status:</strong> ${device.alive ? "Online" : "Offline"}</p>
+        <p><strong>Hostname:</strong> ${device.hostname || "Unknown"}</p>
+        <p><strong>Vendor:</strong> ${device.vendor || "Unknown"}</p>
+        <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
+        <p><strong>MAC Address:</strong> ${device.mac || "Unknown"}</p>
+        <p><strong>Response Time:</strong> ${device.responseTime || "Unknown"} ms</p>
+        <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
+      </div>
+      <div class="col-md-6">
+        <h6>API Information</h6>
+        <p><strong>Login Code:</strong> ${device.loginCode || "Unknown"}</p>
+        <p><strong>Login Name:</strong> ${device.loginName || "Unknown"}</p>
+        <p><strong>Login Wait:</strong> ${device.loginWait || "Unknown"}</p>
+        <hr>
+        <h6>Version Information</h6>
+        <p><strong>Version:</strong> ${device.version || "Unknown"}</p>
+        <p><strong>SVN Version:</strong> ${device.svnVersion || "Unknown"}</p>
+        <p><strong>Build:</strong> ${device.build || "Unknown"}</p>
+        <p><strong>Model:</strong> ${device.model || "Unknown"}</p>
+        <hr>
+        <h6>Network Information</h6>
+        <p><strong>Device IP:</strong> ${device.deviceIpAddress || "Unknown"}</p>
+      </div>
+    </div>
   `;
 
   const modalElement = document.getElementById("deviceModal");
@@ -39,12 +58,42 @@ async function handleFetch(deviceOrIp) {
     
     console.log(`Attempting to fetch system info for IP: ${ip}`);
     
-    // For now, just show the device details without API call
-    // The API functionality can be added later if needed
-    showDeviceDetails(device);
+    // Use the IPC-based API to fetch comprehensive system information
+    const loginResult = await window.api.loginDevice(ip, "admin", "admin");
+    console.log("Login result:", loginResult);
+    
+    // Fetch all available information in parallel
+    const [versionInfo, svnVersion, ipAddress] = await Promise.all([
+      window.api.fetchSystemInfo(ip, loginResult),
+      window.api.fetchSvnVersion(ip),
+      window.api.fetchIpAddress(ip)
+    ]);
+
+    const enrichedDevice = {
+      ...device,
+      // Login information
+      loginCode: loginResult.code,
+      loginName: loginResult.name,
+      loginWait: loginResult.wait,
+      // Version information
+      version: versionInfo.version,
+      svnVersion: svnVersion.svn_version,
+      // Network information
+      deviceIpAddress: ipAddress.ipaddr
+    };
+    
+    showDeviceDetails(enrichedDevice);
   } catch (error) {
     console.error("Device fetch failed:", error);
-    alert(`Could not fetch system info from ${typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp.ip}. Error: ${error.message}`);
+    
+    // Show more specific error messages
+    if (error.message.includes('fetch')) {
+      alert(`Network error: Could not connect to ${typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp.ip}. Please check if the device is reachable and supports the API.`);
+    } else if (error.message.includes('Login failed')) {
+      alert(`Authentication failed for ${typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp.ip}. Please check credentials.`);
+    } else {
+      alert(`Could not fetch system info from ${typeof deviceOrIp === 'string' ? deviceOrIp : deviceOrIp.ip}. Error: ${error.message}`);
+    }
   }
 }
 

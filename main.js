@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const arpScan = require("./arpScanner");
 const exportToExcel = require("./excelFile");
+const { login, fetchSystemInfo, fetchExtensions, fetchSvnVersion, fetchIpAddress } = require("./api/dasscomClient");
 const preloadPath = path.join(__dirname, "src", "preload.js");
 
 console.log("Loaded main.js from:", __filename);
@@ -61,6 +62,57 @@ ipcMain.on("open-ip", async (event, ip) => {
     shell.openExternal(`http://${ip}`);
   } else {
     dialog.showErrorBox("Device Unreachable", `Cannot reach ${ip}.`);
+  }
+});
+
+// API handlers for device management
+ipcMain.handle("login-device", async (event, ip, username, password) => {
+  try {
+    const token = await login(ip, username, password);
+    return token;
+  } catch (error) {
+    console.error("Login failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-system-info", async (event, ip, token) => {
+  try {
+    const info = await fetchSystemInfo(ip, token);
+    return info;
+  } catch (error) {
+    console.error("System info fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-extensions", async (event, ip, token) => {
+  try {
+    const extensions = await fetchExtensions(ip, token);
+    return extensions;
+  } catch (error) {
+    console.error("Extensions fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-svn-version", async (event, ip) => {
+  try {
+    const svnVersion = await fetchSvnVersion(ip);
+    return svnVersion;
+  } catch (error) {
+    console.error("SVN version fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-ip-address", async (event, ip) => {
+  try {
+    const ipAddress = await fetchIpAddress(ip);
+    return ipAddress;
+  } catch (error) {
+    console.error("IP address fetch failed:", error);
+    throw error;
   }
 });
 

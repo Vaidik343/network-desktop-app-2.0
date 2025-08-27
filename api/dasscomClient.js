@@ -3,10 +3,9 @@ async function login(ip, username, password) {
    const controller = new AbortController();
    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
    
-   const res = await fetch(`http://${ip}/auth/login`, {
+   const res = await fetch(`http://${ip}/action/login?username=${username}&password=${password}`, {
      method: "POST",
      headers: {"Content-Type": "application/json"},
-     body: JSON.stringify({username, password}),
      signal: controller.signal,
      mode: 'cors' // Explicitly set CORS mode
    });
@@ -18,8 +17,9 @@ async function login(ip, username, password) {
    }
    
    const response = await res.json();
-   const {data: token} = response;
-   return token; 
+   // New API returns: { "wait": 1, "code": 1, "name": "admin" }
+   // We'll use the response as the session token
+   return response; 
  } catch (error) {
    if (error.name === 'AbortError') {
      throw new Error('Login request timed out');
@@ -33,8 +33,8 @@ async function fetchSystemInfo(ip, token) {
    const controller = new AbortController();
    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
    
-   const res = await fetch(`http://${ip}/pbx/systeminfo/version`, {
-     headers: { Authorization: token },
+   const res = await fetch(`http://${ip}/cgi-bin/infos.cgi?oper=query&param=version`, {
+     method: "GET",
      signal: controller.signal,
      mode: 'cors'
    });
@@ -81,4 +81,58 @@ async function fetchExtensions(ip, token) {
  }
 }
 
-module.exports = {login, fetchExtensions, fetchSystemInfo}
+// Query SVN version number
+async function fetchSvnVersion(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+   
+   const res = await fetch(`http://${ip}/cgi-bin/infos.cgi?oper=query&param=svn_version`, {
+     method: "GET",
+     signal: controller.signal,
+     mode: 'cors'
+   });
+   
+   clearTimeout(timeoutId);
+   
+   if (!res.ok) {
+     throw new Error(`SVN version fetch failed: ${res.status} ${res.statusText}`);
+   }
+   
+   return await res.json();
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('SVN version request timed out');
+   }
+   throw error;
+ }
+}
+
+// Get IP Address
+async function fetchIpAddress(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+   
+   const res = await fetch(`http://${ip}/cgi-bin/infos.cgi?oper=query&param=ipaddr`, {
+     method: "GET",
+     signal: controller.signal,
+     mode: 'cors'
+   });
+   
+   clearTimeout(timeoutId);
+   
+   if (!res.ok) {
+     throw new Error(`IP address fetch failed: ${res.status} ${res.statusText}`);
+   }
+   
+   return await res.json();
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('IP address request timed out');
+   }
+   throw error;
+ }
+}
+
+module.exports = { login, fetchExtensions, fetchSystemInfo, fetchSvnVersion, fetchIpAddress };
