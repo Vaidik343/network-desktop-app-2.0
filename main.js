@@ -98,7 +98,11 @@ ipcMain.handle("fetch-extensions", async (event, ip, token) => {
 
 ipcMain.handle("fetch-svn-version", async (event, ip) => {
   try {
+    console.log("Main process: Calling fetchSvnVersion for IP:", ip);
     const svnVersion = await fetchSvnVersion(ip);
+    console.log("Main process: fetchSvnVersion result:", svnVersion);
+    console.log("Main process: fetchSvnVersion result type:", typeof svnVersion);
+    console.log("Main process: fetchSvnVersion result keys:", svnVersion ? Object.keys(svnVersion) : 'null/undefined');
     return svnVersion;
   } catch (error) {
     console.error("SVN version fetch failed:", error);

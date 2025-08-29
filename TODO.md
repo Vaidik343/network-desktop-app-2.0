@@ -26,6 +26,7 @@
 - [x] Fix preload.js clearSession reference causing API response display issues
 - [x] Add interactive API buttons in device modal
 - [x] Implement individual API endpoint calling and response display
+- [x] Fix JSON response text color to black for better visibility
 
 ## Files to Edit
 - api/dasscomClient.js (login function and session management)

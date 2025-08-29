@@ -50,13 +50,27 @@ async function callApiAndDisplay(ip, apiType) {
     }
 
     // Display the result
+    console.log(`${apiName} API result received in renderer:`, result);
+    console.log(`${apiName} API result type:`, typeof result);
+    console.log(`${apiName} API result keys:`, result ? Object.keys(result) : 'null/undefined');
+
     const formattedResult = JSON.stringify(result, null, 2);
+    console.log(`${apiName} API formatted result:`, formattedResult);
+
     responseContent.innerHTML = `
       <div class="alert alert-success mb-2">
         <strong>✅ ${apiName} API Response:</strong>
         <small class="text-muted">Authentication successful</small>
       </div>
-      <pre class="mb-0" style="font-size: 12px;"><code>${formattedResult}</code></pre>
+      <pre class="mb-0" style="font-size: 12px; color: #000000; background-color: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6;">
+        <code style="color: #000000; font-family: 'Courier New', monospace;">${formattedResult}</code>
+      </pre>
+      <div class="mt-2 small text-muted">
+        <strong>Debug Info:</strong><br>
+        Type: ${typeof result}<br>
+        Keys: ${result ? Object.keys(result).join(', ') : 'null/undefined'}<br>
+        Raw: ${JSON.stringify(result)}
+      </div>
     `;
 
     console.log(`${apiName} API result:`, result);

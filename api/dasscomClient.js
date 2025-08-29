@@ -83,8 +83,20 @@ async function fetchSystemInfo(ip, token) {
      throw new Error(`System info fetch failed: ${res.status} ${res.statusText}`);
    }
 
-   const data = await res.json();
-   console.log("📄 System info response:", data);
+   const responseText = await res.text();
+   console.log("📄 System info raw response text:", responseText);
+
+   let data;
+   try {
+     data = JSON.parse(responseText);
+     console.log("📄 System info parsed response:", data);
+   } catch (parseError) {
+     console.error("❌ Failed to parse system info response as JSON:", parseError.message);
+     console.log("📄 Response text that failed to parse:", responseText);
+     // Return the raw text if JSON parsing fails
+     return { rawResponse: responseText };
+   }
+
    return data;
  } catch (error) {
    if (error.name === 'AbortError') {
