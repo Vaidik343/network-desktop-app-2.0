@@ -1,7 +1,7 @@
 {
   "name": "dc-scan-network",
   "version": "1.0.0",
-  "description": "",
+  "description": "Network scanning tool for device discovery and management",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -40,10 +40,17 @@
       
     ],
     "directories": {
+      "output": "dist-installer",
       "buildResources": "assets"
     },
     "win": {
-      "target": "nsis",
+      "icon": "assets/icons/image2.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
       "signAndEditExecutable": false
     },
     "nsis": {
@@ -52,7 +59,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "DC Scan Network"
+      "shortcutName": "DC Scan Network",
+      "installerIcon": "assets/icons/image2.ico",
+      "uninstallerIcon": "assets/icons/image2.ico"
     }
   }
 }

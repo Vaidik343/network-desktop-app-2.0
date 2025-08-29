@@ -1,42 +1,74 @@
+const { shell } = require("electron"); // add this at the top
+
+// Global cookie store for session management
+const cookieStore = new Map();
+
 async function login(ip, username, password) {
- try {
-   const controller = new AbortController();
-   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-   
-   const res = await fetch(`http://${ip}/action/login?username=${username}&password=${password}`, {
-     method: "POST",
-     headers: {"Content-Type": "application/json"},
-     signal: controller.signal,
-     mode: 'cors' // Explicitly set CORS mode
-   });
+  console.log("🚀 ~ login ~ login:", ip, username);
 
-   clearTimeout(timeoutId);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 sec timeout
 
-   if (!res.ok) {
-     throw new Error(`Login failed: ${res.status} ${res.statusText}`);
-   }
-   
-   const response = await res.json();
-   // New API returns: { "wait": 1, "code": 1, "name": "admin" }
-   // We'll use the response as the session token
-   return response; 
- } catch (error) {
-   if (error.name === 'AbortError') {
-     throw new Error('Login request timed out');
-   }
-   throw error;
- }
+  try {
+    const loginUrl = `http://${ip}/action/login?username=${username}&password=${password}`;
+    let res = await fetch(loginUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    console.log("🚀 ~ login ~ res (API):", res.status, res.statusText);
+
+    if (res.ok) {
+      // ✅ API login worked - store cookies for session management
+      const setCookieHeader = res.headers.get('set-cookie');
+      if (setCookieHeader) {
+        cookieStore.set(ip, setCookieHeader);
+        console.log("🍪 Stored session cookies for", ip);
+      }
+      
+      const loginData = await res.json();
+      return { ...loginData, ip, sessionCookies: setCookieHeader };
+    } else {
+      // ❌ API login failed → open normal web UI
+      console.warn(`⚠️ Login endpoint failed (${res.status}), opening in browser...`);
+      shell.openExternal(`http://${ip}`);
+      return { openedBrowser: true };
+    }
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.error("❌ Login request error:", error.message);
+
+    // If request itself failed (timeout / network) → still open browser
+    shell.openExternal(`http://${ip}`);
+    return { openedBrowser: true };
+  }
 }
+
 
 async function fetchSystemInfo(ip, token) {
  try {
    const controller = new AbortController();
    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
    
+   // Build headers with session cookies
+   const headers = {
+     'Content-Type': 'application/json',
+   };
+   
+   // Add session cookies if available
+   const sessionCookies = cookieStore.get(ip);
+   if (sessionCookies) {
+     headers['Cookie'] = sessionCookies;
+   }
+   
    const res = await fetch(`http://${ip}/cgi-bin/infos.cgi?oper=query&param=version`, {
      method: "GET",
+     headers: headers,
      signal: controller.signal,
-     mode: 'cors'
+     mode: 'cors',
+     credentials: 'include' // Include cookies in the request
    });
    
    clearTimeout(timeoutId);
@@ -60,10 +92,27 @@ async function fetchExtensions(ip, token) {
    const controller = new AbortController();
    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
    
+   // Build headers with session cookies and authorization token
+   const headers = {
+     'Content-Type': 'application/json',
+   };
+   
+   // Add authorization token if provided
+   if (token) {
+     headers['Authorization'] = token;
+   }
+   
+   // Add session cookies if available
+   const sessionCookies = cookieStore.get(ip);
+   if (sessionCookies) {
+     headers['Cookie'] = sessionCookies;
+   }
+   
    const res = await fetch(`http://${ip}/pbx/extension-digital/search-extension`, {
-     headers: { Authorization: token },
+     headers: headers,
      signal: controller.signal,
-     mode: 'cors'
+     mode: 'cors',
+     credentials: 'include' // Include cookies in the request
    });
    
    clearTimeout(timeoutId);
@@ -87,10 +136,23 @@ async function fetchSvnVersion(ip) {
    const controller = new AbortController();
    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
    
+   // Build headers with session cookies
+   const headers = {
+     'Content-Type': 'application/json',
+   };
+   
+   // Add session cookies if available
+   const sessionCookies = cookieStore.get(ip);
+   if (sessionCookies) {
+     headers['Cookie'] = sessionCookies;
+   }
+   
    const res = await fetch(`http://${ip}/cgi-bin/infos.cgi?oper=query&param=svn_version`, {
      method: "GET",
+     headers: headers,
      signal: controller.signal,
-     mode: 'cors'
+     mode: 'cors',
+     credentials: 'include' // Include cookies in the request
    });
    
    clearTimeout(timeoutId);
@@ -114,10 +176,23 @@ async function fetchIpAddress(ip) {
    const controller = new AbortController();
    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
    
+   // Build headers with session cookies
+   const headers = {
+     'Content-Type': 'application/json',
+   };
+   
+   // Add session cookies if available
+   const sessionCookies = cookieStore.get(ip);
+   if (sessionCookies) {
+     headers['Cookie'] = sessionCookies;
+   }
+   
    const res = await fetch(`http://${ip}/cgi-bin/infos.cgi?oper=query&param=ipaddr`, {
      method: "GET",
+     headers: headers,
      signal: controller.signal,
-     mode: 'cors'
+     mode: 'cors',
+     credentials: 'include' // Include cookies in the request
    });
    
    clearTimeout(timeoutId);
@@ -135,4 +210,44 @@ async function fetchIpAddress(ip) {
  }
 }
 
-module.exports = { login, fetchExtensions, fetchSystemInfo, fetchSvnVersion, fetchIpAddress };
+//get account information
+async function fetchAccountInfo(ip) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    // Build headers with session cookies
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Add session cookies if available
+    const sessionCookies = cookieStore.get(ip);
+    if (sessionCookies) {
+      headers['Cookie'] = sessionCookies;
+    }
+
+    const res = await fetch(`http://${ip}/cgi-bin/infos.cgi?oper=query&param=account_infos`, {
+      method: "GET",
+      headers: headers,
+      signal: controller.signal,
+      mode: 'cors',
+      credentials: 'include' // Include cookies in the request
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      throw new Error(`Account info fetch failed: ${res.status} ${res.statusText}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Account info request timed out');
+    }
+
+    throw error;
+  }
+}
+module.exports = { login, fetchExtensions, fetchSystemInfo, fetchSvnVersion, fetchIpAddress , fetchAccountInfo};

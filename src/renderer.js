@@ -176,7 +176,7 @@ function renderCards(data) {
     // Clicking IP opens in browser
     col.querySelector(".ip-cell").addEventListener("click", (e) => {
       e.stopPropagation();
-      handleFetch(device.ip);
+      handleFetch(device);
     });
 
     cardContainer.appendChild(col);

@@ -1,0 +1,32 @@
+directories:
+  output: dist-installer
+  buildResources: assets
+appId: com.dcscan.network
+productName: DC Scan Network
+files:
+  - filter:
+      - '**/*'
+      - assets/bootstrap/**/*
+      - assets/data/oui.txt
+      - assets/
+asarUnpack:
+  - node_modules/oui/**/*
+  - node_modules/mac-lookup/**/*
+  - assets/data/**/*
+win:
+  icon: assets/icons/image2.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: DC Scan Network
+  installerIcon: assets/icons/image2.ico
+  uninstallerIcon: assets/icons/image2.ico
+electronVersion: 37.2.6

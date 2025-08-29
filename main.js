@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const arpScan = require("./arpScanner");
 const exportToExcel = require("./excelFile");
-const { login, fetchSystemInfo, fetchExtensions, fetchSvnVersion, fetchIpAddress } = require("./api/dasscomClient");
+const { login, fetchSystemInfo, fetchExtensions, fetchSvnVersion, fetchIpAddress, fetchAccountInfo } = require("./api/dasscomClient");
 const preloadPath = path.join(__dirname, "src", "preload.js");
 
 console.log("Loaded main.js from:", __filename);

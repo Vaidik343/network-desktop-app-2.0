@@ -1,0 +1,67 @@
+{
+  "loginSuccess": {
+    "wait": 1,
+    "code": 1,
+    "name": "admin"
+  },
+  "loginFailure": {
+    "error": "Authentication failed",
+    "code": 0
+  },
+  "systemInfo": {
+    "version": "2.0.1.12",
+    "build_date": "2023-10-15",
+    "hardware": "Dasscom IP Phone v2"
+  },
+  "svnVersion": {
+    "svn_version": "r12345",
+    "revision": 12345
+  },
+  "ipAddress": {
+    "ip_address": "192.168.1.100",
+    "subnet_mask": "255.255.255.0",
+    "gateway": "192.168.1.1"
+  },
+  "accountInfo": {
+    "accounts": [
+      {
+        "id": 1,
+        "username": "admin",
+        "role": "administrator",
+        "status": "active"
+      },
+      {
+        "id": 2,
+        "username": "user",
+        "role": "user",
+        "status": "active"
+      }
+    ]
+  },
+  "extensions": {
+    "extensions": [
+      {
+        "id": 1001,
+        "number": "1001",
+        "name": "John Doe",
+        "status": "registered",
+        "ip_address": "192.168.1.101"
+      },
+      {
+        "id": 1002,
+        "number": "1002",
+        "name": "Jane Smith",
+        "status": "registered",
+        "ip_address": "192.168.1.102"
+      },
+      {
+        "id": 1003,
+        "number": "1003",
+        "name": "Bob Johnson",
+        "status": "unregistered",
+        "ip_address": "192.168.1.103"
+      }
+    ],
+    "total": 3
+  }
+}
