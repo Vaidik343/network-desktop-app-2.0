@@ -3,69 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const arpScan = require("./arpScanner");
 const exportToExcel = require("./excelFile");
-const { login, fetchSystemInfo, fetchSystemInfoWithAuth, fetchExtensions, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, clearSession } = require("./api/dasscomClient");
-
-// Fallback function for system info with basic auth
-async function fetchSystemInfoWithFallback(ip) {
-  try {
-    // First try with session cookies
-    return await fetchSystemInfo(ip);
-  } catch (error) {
-    console.log("🍪 Cookie-based auth failed, trying basic auth...");
-    // If cookies fail, try basic authentication
-    return await fetchSystemInfoWithAuth(ip, 'admin', 'admin');
-  }
-}
-
-// Fallback function for SVN version with basic auth
-async function fetchSvnVersionWithFallback(ip) {
-  try {
-    return await fetchSvnVersion(ip);
-  } catch (error) {
-    console.log("🍪 SVN version cookie auth failed, trying basic auth...");
-    const authString = btoa('admin:admin');
-    const headers = {
-      'Authorization': `Basic ${authString}`,
-      'Content-Type': 'application/json',
-    };
-    const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&param=svn_version`;
-    const res = await fetch(apiUrl, {
-      method: "GET",
-      headers: headers,
-      mode: 'cors',
-      credentials: 'include'
-    });
-    if (!res.ok) {
-      throw new Error(`SVN version fetch failed: ${res.status} ${res.statusText}`);
-    }
-    return await res.json();
-  }
-}
-
-// Fallback function for IP address with basic auth
-async function fetchIpAddressWithFallback(ip) {
-  try {
-    return await fetchIpAddress(ip);
-  } catch (error) {
-    console.log("🍪 IP address cookie auth failed, trying basic auth...");
-    const authString = btoa('admin:admin');
-    const headers = {
-      'Authorization': `Basic ${authString}`,
-      'Content-Type': 'application/json',
-    };
-    const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&param=ipaddr`;
-    const res = await fetch(apiUrl, {
-      method: "GET",
-      headers: headers,
-      mode: 'cors',
-      credentials: 'include'
-    });
-    if (!res.ok) {
-      throw new Error(`IP address fetch failed: ${res.status} ${res.statusText}`);
-    }
-    return await res.json();
-  }
-}
+const { login, fetchSystemInfo, fetchExtensions, fetchSvnVersion, fetchIpAddress, fetchAccountInfo } = require("./api/dasscomClient");
 const preloadPath = path.join(__dirname, "src", "preload.js");
 
 console.log("Loaded main.js from:", __filename);
@@ -140,7 +78,7 @@ ipcMain.handle("login-device", async (event, ip, username, password) => {
 
 ipcMain.handle("fetch-system-info", async (event, ip, token) => {
   try {
-    const info = await fetchSystemInfoWithFallback(ip);
+    const info = await fetchSystemInfo(ip, token);
     return info;
   } catch (error) {
     console.error("System info fetch failed:", error);
@@ -160,7 +98,7 @@ ipcMain.handle("fetch-extensions", async (event, ip, token) => {
 
 ipcMain.handle("fetch-svn-version", async (event, ip) => {
   try {
-    const svnVersion = await fetchSvnVersionWithFallback(ip);
+    const svnVersion = await fetchSvnVersion(ip);
     return svnVersion;
   } catch (error) {
     console.error("SVN version fetch failed:", error);
@@ -170,7 +108,7 @@ ipcMain.handle("fetch-svn-version", async (event, ip) => {
 
 ipcMain.handle("fetch-ip-address", async (event, ip) => {
   try {
-    const ipAddress = await fetchIpAddressWithFallback(ip);
+    const ipAddress = await fetchIpAddress(ip);
     return ipAddress;
   } catch (error) {
     console.error("IP address fetch failed:", error);
@@ -188,15 +126,7 @@ ipcMain.handle("fetch-account-info", async (event, ip) => {
   }
 });
 
-ipcMain.handle("clear-session", async (event, ip) => {
-  try {
-    clearSession(ip);
-    return { success: true };
-  } catch (error) {
-    console.error("Clear session failed:", error);
-    throw error;
-  }
-});
+
 
 function createWindow() {
   const win = new BrowserWindow({

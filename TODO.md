@@ -17,8 +17,13 @@
 - [x] Add fallback authentication mechanism (Basic Auth)
 - [x] Implement automatic fallback from cookie auth to basic auth for all APIs
 - [x] Verify cookies are stored and sent in subsequent API requests
-- [ ] Confirm subsequent API calls work without 401 errors (with fallback)
+- [x] Confirm subsequent API calls work without 401 errors (with fallback)
 - [x] Fix module export issue for fetchSystemInfoWithAuth function
+- [x] Update all API functions to use Basic Auth directly (no cookies needed)
+- [x] Remove unused cookie store and fallback functions
+- [x] Fix login method to use POST as per API documentation
+- [x] Fix clearSession reference error preventing app startup
+- [x] Fix preload.js clearSession reference causing API response display issues
 - [x] Add interactive API buttons in device modal
 - [x] Implement individual API endpoint calling and response display
 
