@@ -10,12 +10,83 @@ const tableBtn = document.getElementById("tableViewBtn");
 // Import statements will be handled via require in Electron
 
 // 📦 Modal and Device Functions
+async function callApiAndDisplay(ip, apiType) {
+  try {
+    console.log(`Calling ${apiType} API for ${ip}`);
+
+    // Show loading state
+    const responseContainer = document.getElementById('api-response-container');
+    const responseContent = document.getElementById('api-response-content');
+    responseContainer.style.display = 'block';
+    responseContent.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</div>';
+
+    let result;
+    let apiName = '';
+
+    // Call the appropriate API based on type
+    switch (apiType) {
+      case 'system-info':
+        apiName = 'System Info';
+        result = await window.api.fetchSystemInfo(ip);
+        break;
+      case 'svn-version':
+        apiName = 'SVN Version';
+        result = await window.api.fetchSvnVersion(ip);
+        break;
+      case 'ip-address':
+        apiName = 'IP Address';
+        result = await window.api.fetchIpAddress(ip);
+        break;
+      case 'account-info':
+        apiName = 'Account Info';
+        result = await window.api.fetchAccountInfo(ip);
+        break;
+      case 'extensions':
+        apiName = 'Extensions';
+        result = await window.api.fetchExtensions(ip);
+        break;
+      default:
+        throw new Error(`Unknown API type: ${apiType}`);
+    }
+
+    // Display the result
+    const formattedResult = JSON.stringify(result, null, 2);
+    responseContent.innerHTML = `
+      <div class="alert alert-success mb-2">
+        <strong>✅ ${apiName} API Response:</strong>
+        <small class="text-muted">Authentication successful</small>
+      </div>
+      <pre class="mb-0" style="font-size: 12px;"><code>${formattedResult}</code></pre>
+    `;
+
+    console.log(`${apiName} API result:`, result);
+
+  } catch (error) {
+    console.error(`API call failed for ${apiType}:`, error);
+
+    const responseContainer = document.getElementById('api-response-container');
+    const responseContent = document.getElementById('api-response-content');
+    responseContainer.style.display = 'block';
+
+    responseContent.innerHTML = `
+      <div class="alert alert-danger mb-2">
+        <strong>❌ API Call Failed:</strong> ${error.message}
+      </div>
+      <div class="text-muted small">
+        Check the console for more details. Make sure the device is online and the API is supported.
+      </div>
+    `;
+  }
+}
+
 function showDeviceDetails(device) {
   const modalBody = document.getElementById("deviceModalBody");
+  const ip = device.ip || "Unknown";
+
   modalBody.innerHTML = `
     <div class="row">
       <div class="col-md-6">
-        <h4>${device.ip || "Unknown"}</h4>
+        <h4>${ip}</h4>
         <hr>
         <h6>Basic Information</h6>
         <p><strong>Status:</strong> ${device.alive ? "Online" : "Offline"}</p>
@@ -27,22 +98,40 @@ function showDeviceDetails(device) {
         <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
       </div>
       <div class="col-md-6">
-        <h6>API Information</h6>
-        <p><strong>Login Code:</strong> ${device.loginCode || "Unknown"}</p>
-        <p><strong>Login Name:</strong> ${device.loginName || "Unknown"}</p>
-        <p><strong>Login Wait:</strong> ${device.loginWait || "Unknown"}</p>
-        <hr>
-        <h6>Version Information</h6>
-        <p><strong>Version:</strong> ${device.version || "Unknown"}</p>
-        <p><strong>SVN Version:</strong> ${device.svnVersion || "Unknown"}</p>
-        <p><strong>Build:</strong> ${device.build || "Unknown"}</p>
-        <p><strong>Model:</strong> ${device.model || "Unknown"}</p>
-        <hr>
-        <h6>Network Information</h6>
-        <p><strong>Device IP:</strong> ${device.deviceIpAddress || "Unknown"}</p>
+        <h6>Available API Endpoints</h6>
+        <div class="mb-3">
+          <button class="btn btn-primary btn-sm me-2 mb-2 api-btn" data-api="system-info" data-ip="${ip}">
+            📊 System Info
+          </button>
+          <button class="btn btn-success btn-sm me-2 mb-2 api-btn" data-api="svn-version" data-ip="${ip}">
+            🔢 SVN Version
+          </button>
+          <button class="btn btn-info btn-sm me-2 mb-2 api-btn" data-api="ip-address" data-ip="${ip}">
+            🌐 IP Address
+          </button>
+          <button class="btn btn-warning btn-sm me-2 mb-2 api-btn" data-api="account-info" data-ip="${ip}">
+            👤 Account Info
+          </button>
+          <button class="btn btn-secondary btn-sm me-2 mb-2 api-btn" data-api="extensions" data-ip="${ip}">
+            📞 Extensions
+          </button>
+        </div>
+        <div id="api-response-container" class="mt-3" style="display: none;">
+          <h6>API Response:</h6>
+          <div id="api-response-content" class="border p-3 bg-light rounded" style="max-height: 300px; overflow-y: auto;"></div>
+        </div>
       </div>
     </div>
   `;
+
+  // Add event listeners for API buttons
+  modalBody.querySelectorAll('.api-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const apiType = e.target.getAttribute('data-api');
+      const deviceIp = e.target.getAttribute('data-ip');
+      await callApiAndDisplay(deviceIp, apiType);
+    });
+  });
 
   const modalElement = document.getElementById("deviceModal");
   let deviceModal = bootstrap.Modal.getInstance(modalElement);
@@ -61,6 +150,11 @@ async function handleFetch(deviceOrIp) {
     // Use the IPC-based API to fetch comprehensive system information
     const loginResult = await window.api.loginDevice(ip, "admin", "admin");
     console.log("Login result:", loginResult);
+
+    // Show success alert if login worked
+    if (loginResult && loginResult.loginSuccess) {
+      alert(`✅ Login successful for ${ip}! Session established.`);
+    }
     
     // Fetch all available information in parallel
     const [versionInfo, svnVersion, ipAddress] = await Promise.all([
