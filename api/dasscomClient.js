@@ -425,7 +425,7 @@ async function fetchCallStatus(ip) {
      'Content-Type': 'application/json',
    };
 
-   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=account_status`;
+   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=call_status`;
    console.log("call status API URL:", apiUrl);
 
    const res = await fetch(apiUrl, {
@@ -457,7 +457,7 @@ async function fetchCallStatus(ip) {
 
 
 
-//get all account information(parameter)
+//get all account information
 async function fetchAllAcountInformation(ip) {
  try {
    const controller = new AbortController();

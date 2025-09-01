@@ -210,7 +210,7 @@ async function showDeviceDetails(device) {
               <h6 class="mb-0">${icon} ${title}</h6>
             </div>
             <div class="card-body">
-              <div class="api-data-content" style="font-size: 14px; color: #333; line-height: 1.5; max-height: 200px; overflow-y: auto;">
+              <div class="api-data-content" style="font-size: 14px; line-height: 1.5; max-height: 200px; overflow-y: auto;">
                 ${formattedData}
               </div>
             </div>
@@ -253,7 +253,7 @@ async function showDeviceDetails(device) {
 
         <!-- API Data Section -->
         <div class="col-md-12">
-          <h5 class="text-center mb-3"> API Data</h5>
+          <h5 class="text-center mb-3">Advance Data</h5>
           <div class="row">
             ${formatApiResponse(systemInfo, 'System Info', '📊')}
             ${formatApiResponse(svnVersion, 'SVN Version', '🔢')}
@@ -436,7 +436,10 @@ function renderCards(data) {
            style="cursor:pointer;" title="Open in browser"><strong>IP:</strong> ${device.ip}</p>
           <p><strong>MAC:</strong> ${device.mac || "Unknown"}</p>
           <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
-          
+          <p class="redirect-text" style="cursor:pointer; font-size: 14px; color: #fff;">
+            <strong>Web view:</strong>
+            <img src="assets/icons/arrow-up-right-from-square-solid-full.svg" alt="redirect icon" style="width: 12px; height: 12px; margin-left: 5px; vertical-align: middle; cursor: pointer;" class="redirect-icon" />
+          </p>
         </div>
       </div>
     `;
@@ -444,11 +447,21 @@ function renderCards(data) {
     // Clicking card opens modal
     col.querySelector(".e-card").addEventListener("click", () => showDeviceDetails(device));
 
-    // Clicking IP opens in browser
+    // Clicking IP text opens modal with details
     col.querySelector(".ip-cell").addEventListener("click", (e) => {
       e.stopPropagation();
       handleFetch(device);
     });
+
+    // Clicking redirect text or icon redirects to the IP page
+    const redirectText = col.querySelector(".redirect-text");
+    if (redirectText) {
+      redirectText.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const url = `http://${device.ip}`;
+        window.open(url, "_blank");
+      });
+    }
 
     cardContainer.appendChild(col);
   });
