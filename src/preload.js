@@ -11,5 +11,14 @@ contextBridge.exposeInMainWorld("api", {
   fetchExtensions: (ip, token) => ipcRenderer.invoke("fetch-extensions", ip, token),
   fetchSvnVersion: (ip) => ipcRenderer.invoke("fetch-svn-version", ip),
   fetchIpAddress: (ip) => ipcRenderer.invoke("fetch-ip-address", ip),
-  fetchAccountInfo: (ip) => ipcRenderer.invoke("fetch-account-info", ip)
+  fetchAccountInfo: (ip) => ipcRenderer.invoke("fetch-account-info", ip),
+  fetchDNS: (ip) => ipcRenderer.invoke("fetch-dns", ip),
+  fetchGetway: (ip) => ipcRenderer.invoke("fetch-getway", ip),
+  fetchNetMask: (ip) => ipcRenderer.invoke("fetch-netmask", ip),
+  fetchAccountStatus: (ip) => ipcRenderer.invoke("fetch-account-status", ip),
+  fetchCallStatus: (ip) => ipcRenderer.invoke("fetch-call-status", ip),
+  fetchAllAcountInformation: (ip) => ipcRenderer.invoke("fetch-all-account-info", ip),
+  fetchRestart: (ip) => ipcRenderer.invoke("fetch-restart", ip),
+  fetchReset: (ip) => ipcRenderer.invoke("fetch-reset", ip),
+  fetchCall: (ip) => ipcRenderer.invoke("fetch-call", ip)
 });

@@ -1,7 +1,7 @@
 const { shell } = require("electron"); // add this at the top
 
 
-
+//login
 async function login(ip, username, password) {
   console.log("🚀 ~ login ~ login:", ip, username);
 
@@ -52,7 +52,7 @@ async function login(ip, username, password) {
   }
 }
 
-
+//Query version number
 async function fetchSystemInfo(ip, token) {
  try {
    const controller = new AbortController();
@@ -108,48 +108,6 @@ async function fetchSystemInfo(ip, token) {
 }
 
 
-
-
-async function fetchExtensions(ip, token) {
- try {
-   const controller = new AbortController();
-   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-   // Use Basic Auth directly as per API documentation
-   const authString = btoa('admin:admin');
-   const headers = {
-     'Authorization': `Basic ${authString}`,
-     'Content-Type': 'application/json',
-   };
-
-   const apiUrl = `http://${ip}/pbx/extension-digital/search-extension`;
-   console.log("🔗 Extensions API URL:", apiUrl);
-
-   const res = await fetch(apiUrl, {
-     headers: headers,
-     signal: controller.signal,
-     mode: 'cors'
-   });
-
-   clearTimeout(timeoutId);
-   console.log("🚀 ~ fetchExtensions ~ res:", res.status, res.statusText);
-
-   if (!res.ok) {
-     console.error("❌ Extensions fetch failed:", res.status, res.statusText);
-     throw new Error(`Extensions fetch failed: ${res.status} ${res.statusText}`);
-   }
-
-   const data = await res.json();
-   console.log("📄 Extensions response:", data);
-   return data;
- } catch (error) {
-   if (error.name === 'AbortError') {
-     throw new Error('Extensions request timed out');
-   }
-   console.error("❌ Extensions fetch error:", error.message);
-   throw error;
- }
-}
 
 // Query SVN version number
 async function fetchSvnVersion(ip) {
@@ -272,4 +230,409 @@ async function fetchAccountInfo(ip) {
     throw error;
   }
 }
-module.exports = { login, fetchExtensions, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo };
+
+
+//get account information (parameter)
+
+
+
+// get DNS
+
+async function fetchDNS(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=dns_inuse`;
+   console.log("DNS API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ dns ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" DNS fetch failed:", res.status, res.statusText);
+     throw new Error(`DNS fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("DNS response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('DNS request timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+
+//get gateway
+async function fetchGetway(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=gateway_inuse`;
+   console.log("Gateway API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ gateway ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" gateway fetch failed:", res.status, res.statusText);
+     throw new Error(`gateway fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("DNS response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('gateway timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+
+//get the mask
+async function fetchNetMask(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=netmask`;
+   console.log("DNS API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ net mast ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" net mask fetch failed:", res.status, res.statusText);
+     throw new Error(`net mask fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("net mask response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('net mask request timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+//get account status
+
+async function fetchAccountStatus(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=account_status`;
+   console.log("account status API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ account status ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" account status fetch failed:", res.status, res.statusText);
+     throw new Error(`account status fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("account status response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('account status request timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+// get call status
+async function fetchCallStatus(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=account_status`;
+   console.log("call status API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ call status ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" call status fetch failed:", res.status, res.statusText);
+     throw new Error(`call status fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("call status response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('call status request timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+
+
+//get all account information(parameter)
+async function fetchAllAcountInformation(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/infos.cgi?oper=query&amp;param=account_allinfos`;
+   console.log("DNS API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ all account information ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" all account information fetch failed:", res.status, res.statusText);
+     throw new Error(`all account information fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("all account information response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('all account information request timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+//restart
+async function fetchRestart(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/actions.cgi?oper=restart&amp;param=system`;
+
+   
+   console.log("DNS API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ restart ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" restart fetch failed:", res.status, res.statusText);
+     throw new Error(`restart fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("restart response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('restartrequest timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+
+//reset
+async function fetchReset(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/actions.cgi?oper=reset`;
+   
+   console.log("reset API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ reset ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" reset fetch failed:", res.status, res.statusText);
+     throw new Error(`reset fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("reset response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('restartrequest timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+//call
+async function fetchCall(ip) {
+ try {
+   const controller = new AbortController();
+   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+   // Use Basic Auth directly as per API documentation
+   const authString = btoa('admin:admin');
+   const headers = {
+     'Authorization': `Basic ${authString}`,
+     'Content-Type': 'application/json',
+   };
+
+   const apiUrl = `http://${ip}/cgi-bin/actions.cgi?oper=call_out&amp;param=tar_num1234`;
+
+   
+   console.log("DNS API URL:", apiUrl);
+
+   const res = await fetch(apiUrl, {
+     method: "GET",
+     headers: headers,
+     signal: controller.signal,
+     mode: 'cors'
+   });
+
+   clearTimeout(timeoutId);
+   console.log("🚀 ~ call ~ res:", res.status, res.statusText);
+
+   if (!res.ok) {
+     console.error(" call fetch failed:", res.status, res.statusText);
+     throw new Error(`call fetch failed: ${res.status} ${res.statusText}`);
+   }
+
+   const data = await res.json();
+   console.log("call response:", data);
+   return data;
+ } catch (error) {
+   if (error.name === 'AbortError') {
+     throw new Error('call request timed out');
+   }
+   console.error("fetch error:", error.message);
+   throw error;
+ }
+}
+
+
+module.exports = { login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS,  fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus,  fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall};

@@ -96,6 +96,20 @@ img {
 
 
 
+/* footer */
+.footer {
+    display: flex;
+    position: absolute;
+    z-index: 1;
+    justify-content: space-evenly;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #181127;
+    color: #fff;
+    text-align: center;
+    align-items: center;
+}
 
 /* @import url("https://fonts.googleapis.com/css?family=Exo:400,700"); */
 * {

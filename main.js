@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const arpScan = require("./arpScanner");
 const exportToExcel = require("./excelFile");
-const { login, fetchSystemInfo, fetchExtensions, fetchSvnVersion, fetchIpAddress, fetchAccountInfo } = require("./api/dasscomClient");
+const { login, fetchSystemInfo, fetchExtensions, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS, fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus, fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall } = require("./api/dasscomClient");
 const preloadPath = path.join(__dirname, "src", "preload.js");
 
 console.log("Loaded main.js from:", __filename);
@@ -86,15 +86,6 @@ ipcMain.handle("fetch-system-info", async (event, ip, token) => {
   }
 });
 
-ipcMain.handle("fetch-extensions", async (event, ip, token) => {
-  try {
-    const extensions = await fetchExtensions(ip, token);
-    return extensions;
-  } catch (error) {
-    console.error("Extensions fetch failed:", error);
-    throw error;
-  }
-});
 
 ipcMain.handle("fetch-svn-version", async (event, ip) => {
   try {
@@ -129,6 +120,98 @@ ipcMain.handle("fetch-account-info", async (event, ip) => {
     throw error;
   }
 });
+
+ipcMain.handle("fetch-dns", async (event, ip) => {
+  try {
+    const dns = await fetchDNS(ip);
+    return dns;
+  } catch (error) {
+    console.error("DNS fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-getway", async (event, ip) => {
+  try {
+    const gateway = await fetchGetway(ip);
+    return gateway;
+  } catch (error) {
+    console.error("Gateway fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-netmask", async (event, ip) => {
+  try {
+    const netmask = await fetchNetMask(ip);
+    return netmask;
+  } catch (error) {
+    console.error("Netmask fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-account-status", async (event, ip) => {
+  try {
+    const accountStatus = await fetchAccountStatus(ip);
+    return accountStatus;
+  } catch (error) {
+    console.error("Account status fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-call-status", async (event, ip) => {
+  try {
+    const callStatus = await fetchCallStatus(ip);
+    return callStatus;
+  } catch (error) {
+    console.error("Call status fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-all-account-info", async (event, ip) => {
+  try {
+    const allAccountInfo = await fetchAllAcountInformation(ip);
+    return allAccountInfo;
+  } catch (error) {
+    console.error("All account info fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-restart", async (event, ip) => {
+  try {
+    const restart = await fetchRestart(ip);
+    return restart;
+  } catch (error) {
+    console.error("Restart fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-reset", async (event, ip) => {
+  try {
+    const reset = await fetchReset(ip);
+    return reset;
+  } catch (error) {
+    console.error("Reset fetch failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("fetch-call", async (event, ip) => {
+  try {
+    const call = await fetchCall(ip);
+    return call;
+  } catch (error) {
+    console.error("Call fetch failed:", error);
+    throw error;
+  }
+});
+
+
 
 
 

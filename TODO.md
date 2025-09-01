@@ -27,6 +27,9 @@
 - [x] Add interactive API buttons in device modal
 - [x] Implement individual API endpoint calling and response display
 - [x] Fix JSON response text color to black for better visibility
+- [x] Modify modal to automatically display all API data side by side when clicking device
+- [x] Increase modal width to modal-xl for better display of side-by-side API data
+- [x] Integrate all Dasscom IP phone APIs (DNS, Gateway, Netmask, Account Status, Call Status, All Account Info, Restart, Reset, Call, Answer, Send Message, Change Volume, Press Key)
 
 ## Files to Edit
 - api/dasscomClient.js (login function and session management)
@@ -39,3 +42,6 @@
 - Verify login API response and cookie storage in console logs
 - Confirm subsequent API calls work without 401 errors in the app
 - Monitor enhanced logging for debugging information
+
+
+

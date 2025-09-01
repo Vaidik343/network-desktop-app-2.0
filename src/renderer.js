@@ -41,9 +41,45 @@ async function callApiAndDisplay(ip, apiType) {
         apiName = 'Account Info';
         result = await window.api.fetchAccountInfo(ip);
         break;
-      case 'extensions':
-        apiName = 'Extensions';
-        result = await window.api.fetchExtensions(ip);
+ 
+
+
+              case 'account-info':
+        apiName = 'Account info';
+        result = await window.api.fetchAccountInfo(ip);
+        break;
+              case 'dns':
+        apiName = 'DNS';
+        result = await window.api.fetchDNS(ip);
+        break;
+              case 'getway':
+        apiName = 'Getway';
+        result = await window.api.fetchGetway(ip);
+        break;
+              case 'net-Mask':
+        apiName = 'Net Mask';
+        result = await window.api.fetchNetMask(ip);
+        break;
+              case 'call-status':
+        apiName = 'Call status ';
+        result = await window.api.fetchCallStatus(ip);
+        break;
+       
+              case 'all-account-info':
+        apiName = 'All Account Info';
+        result = await window.api.fetchAllAcountInformation(ip);
+        break;
+              case 'restart':
+        apiName = 'Restart';
+        result = await window.api.fetchRestart(ip);
+        break;
+              case 'reset':
+        apiName = 'Reset';
+        result = await window.api.fetchReset(ip);
+        break;
+              case 'call':
+        apiName = 'Call';
+        result = await window.api.fetchCall(ip);
         break;
       default:
         throw new Error(`Unknown API type: ${apiType}`);
@@ -93,64 +129,172 @@ async function callApiAndDisplay(ip, apiType) {
   }
 }
 
-function showDeviceDetails(device) {
+async function showDeviceDetails(device) {
   const modalBody = document.getElementById("deviceModalBody");
   const ip = device.ip || "Unknown";
 
+  // Show loading state initially
   modalBody.innerHTML = `
-    <div class="row">
-      <div class="col-md-6">
-        <h4>${ip}</h4>
-        <hr>
-        <h6>Basic Information</h6>
-        <p><strong>Status:</strong> ${device.alive ? "Online" : "Offline"}</p>
-        <p><strong>Hostname:</strong> ${device.hostname || "Unknown"}</p>
-        <p><strong>Vendor:</strong> ${device.vendor || "Unknown"}</p>
-        <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
-        <p><strong>MAC Address:</strong> ${device.mac || "Unknown"}</p>
-        <p><strong>Response Time:</strong> ${device.responseTime || "Unknown"} ms</p>
-        <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
+    <div class="text-center">
+      <h4>${ip}</h4>
+      <hr>
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
-      <div class="col-md-6">
-        <h6>Available API Endpoints</h6>
-        <div class="mb-3">
-          <button class="btn btn-primary btn-sm me-2 mb-2 api-btn" data-api="system-info" data-ip="${ip}">
-            📊 System Info
-          </button>
-          <button class="btn btn-success btn-sm me-2 mb-2 api-btn" data-api="svn-version" data-ip="${ip}">
-            🔢 SVN Version
-          </button>
-          <button class="btn btn-info btn-sm me-2 mb-2 api-btn" data-api="ip-address" data-ip="${ip}">
-            🌐 IP Address
-          </button>
-          <button class="btn btn-warning btn-sm me-2 mb-2 api-btn" data-api="account-info" data-ip="${ip}">
-            👤 Account Info
-          </button>
-          <button class="btn btn-secondary btn-sm me-2 mb-2 api-btn" data-api="extensions" data-ip="${ip}">
-            📞 Extensions
-          </button>
-        </div>
-        <div id="api-response-container" class="mt-3" style="display: none;">
-          <h6>API Response:</h6>
-          <div id="api-response-content" class="border p-3 bg-light rounded" style="max-height: 300px; overflow-y: auto;"></div>
-        </div>
-      </div>
+      <p class="mt-2">Fetching API data...</p>
     </div>
   `;
 
-  // Add event listeners for API buttons
-  modalBody.querySelectorAll('.api-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const apiType = e.target.getAttribute('data-api');
-      const deviceIp = e.target.getAttribute('data-ip');
-      await callApiAndDisplay(deviceIp, apiType);
-    });
-  });
-
+  // Show modal immediately
   const modalElement = document.getElementById("deviceModal");
   let deviceModal = bootstrap.Modal.getInstance(modalElement);
   if (!deviceModal) deviceModal = new bootstrap.Modal(modalElement);
   deviceModal.show();
+
+  try {
+    // Fetch all API data in parallel
+    console.log(`Fetching all API data for ${ip}`);
+    const [systemInfo, svnVersion, ipAddress, accountInfo, extensions] = await Promise.allSettled([
+      window.api.fetchSystemInfo(ip).catch(err => ({ error: err.message })),
+      window.api.fetchSvnVersion(ip).catch(err => ({ error: err.message })),
+      window.api.fetchIpAddress(ip).catch(err => ({ error: err.message })),
+      window.api.fetchAccountInfo(ip).catch(err => ({ error: err.message })),
+      window.api.fetchExtensions(ip).catch(err => ({ error: err.message }))
+    ]);
+
+    // Format API responses
+    const formatApiResponse = (result, title, icon) => {
+      if (result.status === 'rejected' || result.value?.error) {
+        return `
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-danger">
+              <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">${icon} ${title}</h6>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-danger mb-0">
+                  <strong>❌ Failed:</strong> ${result.value?.error || result.reason?.message || 'Unknown error'}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const data = result.value;
+      const formattedData = JSON.stringify(data, null, 2);
+
+      return `
+        <div class="col-md-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">${icon} ${title}</h6>
+            </div>
+            <div class="card-body">
+              <pre class="mb-0" style="font-size: 11px; color: #000000; background-color: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; max-height: 200px; overflow-y: auto;">
+                <code style="color: #000000; font-family: 'Courier New', monospace;">${formattedData}</code>
+              </pre>
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    // Update modal with all data
+    modalBody.innerHTML = `
+      <div class="row">
+        <div class="col-md-12 mb-3">
+          <h4 class="text-center">${ip}</h4>
+          <hr>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="col-md-12 mb-4">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0">📋 Basic Information</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>Status:</strong> <span class="badge ${device.alive ? 'bg-success' : 'bg-danger'}">${device.alive ? "Online" : "Offline"}</span></p>
+                  <p><strong>Hostname:</strong> ${device.hostname || "Unknown"}</p>
+                  <p><strong>Vendor:</strong> ${device.vendor || "Unknown"}</p>
+                </div>
+                <div class="col-md-6">
+                  <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
+                  <p><strong>MAC Address:</strong> ${device.mac || "Unknown"}</p>
+                  <p><strong>Response Time:</strong> ${device.responseTime || "Unknown"} ms</p>
+                  <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Data Section -->
+        <div class="col-md-12">
+          <h5 class="text-center mb-3">🔧 API Data</h5>
+          <div class="row">
+            ${formatApiResponse(systemInfo, 'System Info', '📊')}
+            ${formatApiResponse(svnVersion, 'SVN Version', '🔢')}
+            ${formatApiResponse(ipAddress, 'IP Address', '🌐')}
+            ${formatApiResponse(accountInfo, 'Account Info', '👤')}
+            ${formatApiResponse(extensions, 'Extensions', '📞')}
+            ${formatApiResponse(await window.api.fetchDNS(ip).catch(err => ({ error: err.message })), 'DNS', '🌐')}
+            ${formatApiResponse(await window.api.fetchGetway(ip).catch(err => ({ error: err.message })), 'Gateway', '🚪')}
+            ${formatApiResponse(await window.api.fetchNetMask(ip).catch(err => ({ error: err.message })), 'Netmask', '📶')}
+            ${formatApiResponse(await window.api.fetchAccountStatus(ip).catch(err => ({ error: err.message })), 'Account Status', '👤')}
+            ${formatApiResponse(await window.api.fetchCallStatus(ip).catch(err => ({ error: err.message })), 'Call Status', '📞')}
+            ${formatApiResponse(await window.api.fetchAllAcountInformation(ip).catch(err => ({ error: err.message })), 'All Account Information', '📋')}
+            ${formatApiResponse(await window.api.fetchCall(ip).catch(err => ({ error: err.message })), 'Call', '📞')}
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="col-md-12 mt-4">
+            <h5 class="text-center mb-3">⚡ Device Actions</h5>
+            <div class="row justify-content-center">
+              <div class="col-md-4 mb-3">
+                <button id="restartBtn" class="btn btn-warning btn-lg w-100" onclick="confirmRestart('${ip}')">
+                  <i class="fas fa-redo"></i> Restart Device
+                </button>
+              </div>
+              <div class="col-md-4 mb-3">
+                <button id="resetBtn" class="btn btn-danger btn-lg w-100" onclick="confirmReset('${ip}')">
+                  <i class="fas fa-power-off"></i> Reset Device
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add action button event listeners
+    setTimeout(() => {
+      const restartBtn = document.getElementById('restartBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      if (restartBtn) {
+        restartBtn.addEventListener('click', () => confirmRestart(ip));
+      }
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => confirmReset(ip));
+      }
+    }, 100);
+
+  } catch (error) {
+    console.error("Error fetching API data:", error);
+    modalBody.innerHTML = `
+      <div class="alert alert-danger">
+        <h4>${ip}</h4>
+        <hr>
+        <h6>❌ Error Loading Device Data</h6>
+        <p>Could not fetch API data for this device.</p>
+        <p><strong>Error:</strong> ${error.message}</p>
+      </div>
+    `;
+  }
 }
 
 async function handleFetch(deviceOrIp) {
@@ -438,3 +582,31 @@ excelBtn.addEventListener("click", async () => {
     alert("Error exporting to Excel.");
   }
 });
+
+// 🔄 Device Action Functions
+async function confirmRestart(ip) {
+  const result = confirm(`⚠️ WARNING: Restart Device\n\nAre you sure you want to restart the device at ${ip}?\n\nThis will temporarily disconnect the device from the network.`);
+  if (result) {
+    try {
+      const response = await window.api.fetchRestart(ip);
+      alert(`✅ Device restart initiated successfully!\n\nDevice: ${ip}\nResponse: ${JSON.stringify(response, null, 2)}`);
+    } catch (error) {
+      alert(`❌ Failed to restart device ${ip}\n\nError: ${error.message}`);
+    }
+  }
+}
+
+async function confirmReset(ip) {
+  const result = confirm(`🚨 DANGER: Reset Device\n\nAre you sure you want to RESET the device at ${ip}?\n\n⚠️ WARNING: This will restore the device to factory settings and may cause data loss!`);
+  if (result) {
+    const secondConfirm = confirm(`🔴 FINAL CONFIRMATION\n\nYou are about to RESET device ${ip} to factory settings.\n\nThis action CANNOT be undone!\n\nAre you absolutely sure?`);
+    if (secondConfirm) {
+      try {
+        const response = await window.api.fetchReset(ip);
+        alert(`✅ Device reset initiated successfully!\n\nDevice: ${ip}\nResponse: ${JSON.stringify(response, null, 2)}`);
+      } catch (error) {
+        alert(`❌ Failed to reset device ${ip}\n\nError: ${error.message}`);
+      }
+    }
+  }
+}
