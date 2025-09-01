@@ -159,7 +159,7 @@ async function showDeviceDetails(device) {
       window.api.fetchSvnVersion(ip).catch(err => ({ error: err.message })),
       window.api.fetchIpAddress(ip).catch(err => ({ error: err.message })),
       window.api.fetchAccountInfo(ip).catch(err => ({ error: err.message })),
-      window.api.fetchExtensions(ip).catch(err => ({ error: err.message }))
+      // window.api.fetchExtensions(ip).catch(err => ({ error: err.message }))
     ]);
 
     // Format API responses
@@ -182,18 +182,37 @@ async function showDeviceDetails(device) {
       }
 
       const data = result.value;
-      const formattedData = JSON.stringify(data, null, 2);
+
+      // Format data as readable text instead of JSON
+      const formatDataAsText = (obj) => {
+        if (!obj || typeof obj !== 'object') {
+          return String(obj || 'N/A');
+        }
+
+        const entries = Object.entries(obj);
+        if (entries.length === 0) {
+          return 'No data available';
+        }
+
+        return entries.map(([key, value]) => {
+          const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+          const displayValue = Array.isArray(value) ? value.join(', ') : String(value || 'N/A');
+          return `<strong>${displayKey}:</strong> ${displayValue}`;
+        }).join('<br>');
+      };
+
+      const formattedData = formatDataAsText(data);
 
       return `
         <div class="col-md-6 mb-3">
-          <div class="card h-100">
-            <div class="card-header bg-success text-white">
+          <div class="card h-100 api-data-card">
+            <div class="card-header api-data-header">
               <h6 class="mb-0">${icon} ${title}</h6>
             </div>
             <div class="card-body">
-              <pre class="mb-0" style="font-size: 11px; color: #000000; background-color: #f8f9fa; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; max-height: 200px; overflow-y: auto;">
-                <code style="color: #000000; font-family: 'Courier New', monospace;">${formattedData}</code>
-              </pre>
+              <div class="api-data-content" style="font-size: 14px; color: #333; line-height: 1.5; max-height: 200px; overflow-y: auto;">
+                ${formattedData}
+              </div>
             </div>
           </div>
         </div>
@@ -211,7 +230,7 @@ async function showDeviceDetails(device) {
         <!-- Basic Information -->
         <div class="col-md-12 mb-4">
           <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header text-white">
               <h6 class="mb-0">📋 Basic Information</h6>
             </div>
             <div class="card-body">
@@ -234,13 +253,13 @@ async function showDeviceDetails(device) {
 
         <!-- API Data Section -->
         <div class="col-md-12">
-          <h5 class="text-center mb-3">🔧 API Data</h5>
+          <h5 class="text-center mb-3"> API Data</h5>
           <div class="row">
             ${formatApiResponse(systemInfo, 'System Info', '📊')}
             ${formatApiResponse(svnVersion, 'SVN Version', '🔢')}
             ${formatApiResponse(ipAddress, 'IP Address', '🌐')}
             ${formatApiResponse(accountInfo, 'Account Info', '👤')}
-            ${formatApiResponse(extensions, 'Extensions', '📞')}
+
             ${formatApiResponse(await window.api.fetchDNS(ip).catch(err => ({ error: err.message })), 'DNS', '🌐')}
             ${formatApiResponse(await window.api.fetchGetway(ip).catch(err => ({ error: err.message })), 'Gateway', '🚪')}
             ${formatApiResponse(await window.api.fetchNetMask(ip).catch(err => ({ error: err.message })), 'Netmask', '📶')}
@@ -252,7 +271,7 @@ async function showDeviceDetails(device) {
 
           <!-- Action Buttons -->
           <div class="col-md-12 mt-4">
-            <h5 class="text-center mb-3">⚡ Device Actions</h5>
+            <h5 class="text-center mb-3"> Device Actions</h5>
             <div class="row justify-content-center">
               <div class="col-md-4 mb-3">
                 <button id="restartBtn" class="btn btn-warning btn-lg w-100" onclick="confirmRestart('${ip}')">
