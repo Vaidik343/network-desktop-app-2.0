@@ -221,7 +221,7 @@ function createWindow() {
     height: 600,
     minWidth: 800,
     minHeight: 600,
-    icon: path.join(__dirname, "assets", "image2.ico"),
+    icon: path.join(__dirname, "assets", "icons", "dasscom.ico"),
     webPreferences: {
       contextIsolation: true,
       preload: preloadPath,

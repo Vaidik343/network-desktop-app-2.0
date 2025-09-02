@@ -14,7 +14,7 @@ asarUnpack:
   - node_modules/mac-lookup/**/*
   - assets/data/**/*
 win:
-  icon: assets/icons/image2.ico
+  icon: icons/dasscom.ico
   target:
     - target: nsis
       arch:
@@ -27,6 +27,6 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: DC Scan Network
-  installerIcon: assets/icons/image2.ico
-  uninstallerIcon: assets/icons/image2.ico
+  installerIcon: icons/dasscom.ico
+  uninstallerIcon: icons/dasscom.ico
 electronVersion: 37.2.6
