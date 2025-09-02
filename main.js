@@ -221,7 +221,7 @@ function createWindow() {
     height: 600,
     minWidth: 800,
     minHeight: 600,
-    icon: path.join(__dirname, "assets", "icons", "dasscom.ico"),
+    icon: "C:\\Vaidik\\Desktop\\DC scan network\\assets\\dasscom\\favicon-32x32.png",
     webPreferences: {
       contextIsolation: true,
       preload: preloadPath,

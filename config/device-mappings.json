@@ -75,7 +75,14 @@
     "arlo": "Security Camera",
     "wyze": "Smart Home",
     "smartthings": "Smart Home Hub",
-    "custom-device": "Custom IoT Device"
+    "custom-device": "Custom IoT Device",
+    "dasscom": "IP Phone",
+    "dasscom ip phone": "IP Phone",
+    "dasscom phone": "IP Phone",
+    "dasscom voip": "IP Phone",
+    "xi'an jizhong digital communication co.,ltd": "IP Phone",
+    "xi'an jizhong": "IP Phone",
+    "ieee registration authority": "IP Phone"
   },
   "patterns": {
     "router|gateway|access point": "Network Device",
@@ -94,7 +101,8 @@
     "lighting|bulb|led": "Smart Lighting",
     "sensor|detector|alarm": "Sensor Device",
     "hub|bridge|gateway": "Hub / Gateway",
-    "iot.*sensor|sensor.*iot": "IoT Sensor"
+    "iot.*sensor|sensor.*iot": "IoT Sensor",
+    "ip.*phone|voip.*phone|sip.*phone": "IP Phone"
   },
   "categories": {
     "networking": "Network Device",

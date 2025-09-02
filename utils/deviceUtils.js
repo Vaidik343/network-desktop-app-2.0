@@ -1,6 +1,7 @@
 const { lookupVendor, normalizeMac } = require("./arpUtils");
 const fs = require('fs');
 const path = require('path');
+const dns = require('dns').promises;
 
 // 🔧 Configurable device type mappings
 const DEVICE_TYPE_MAPPINGS = {
@@ -279,8 +280,11 @@ async function detectDeviceTypeDynamic(mac, vendor, openPorts = []) {
   return detectDeviceType(mac, vendor);
 }
 
-module.exports = { 
-  enrichDevice, 
+// Load mappings from config file on module load
+loadDeviceMappingsFromFile();
+
+module.exports = {
+  enrichDevice,
   detectDeviceType,
   detectDeviceTypeDynamic,
   addVendorMapping,
