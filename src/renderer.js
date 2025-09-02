@@ -243,8 +243,6 @@ async function showDeviceDetails(device) {
                 <div class="col-md-6">
                   <p><strong>Type:</strong> ${device.type || "Unknown"}</p>
                   <p><strong>MAC Address:</strong> ${device.mac || "Unknown"}</p>
-                  <p><strong>Response Time:</strong> ${device.responseTime || "Unknown"} ms</p>
-                  <p><strong>Open Ports:</strong> ${device.openPorts?.join(", ") || "None"}</p>
                 </div>
               </div>
             </div>

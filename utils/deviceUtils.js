@@ -2,6 +2,7 @@ const { lookupVendor, normalizeMac } = require("./arpUtils");
 const fs = require('fs');
 const path = require('path');
 const dns = require('dns').promises;
+const http = require('http');
 
 // 🔧 Configurable device type mappings
 const DEVICE_TYPE_MAPPINGS = {
@@ -171,12 +172,46 @@ function inferDeviceTypeFromVendor(vendor) {
 async function enrichDevice(device) {
   const vendor = lookupVendor(device.mac) || "Unknown";
   const type = detectDeviceType(device.mac, vendor);
-  
+
+  // Try to resolve hostname if not available
+  let hostname = device.hostname || "Unknown";
+  if (hostname === "Unknown" && device.ip && device.ip !== "Unknown") {
+    try {
+      console.log(`🔍 Attempting reverse DNS lookup for ${device.ip}`);
+      const hostnames = await dns.reverse(device.ip);
+      hostname = hostnames[0] || "Unknown";
+      console.log(`✅ Reverse DNS resolved ${device.ip} to ${hostname}`);
+    } catch (error) {
+      console.log(`❌ Reverse DNS lookup failed for ${device.ip}: ${error.message}`);
+      hostname = "Unknown";
+    }
+  }
+
+  // If still unknown, try forward DNS lookup (resolve IP to hostname)
+  if (hostname === "Unknown" && device.ip && device.ip !== "Unknown") {
+    try {
+      console.log(`🔍 Attempting forward DNS lookup for ${device.ip}`);
+      const lookupResult = await dns.lookup(device.ip);
+      if (lookupResult && lookupResult.hostname) {
+        hostname = lookupResult.hostname;
+        console.log(`✅ Forward DNS resolved ${device.ip} to ${hostname}`);
+      }
+    } catch (error) {
+      console.log(`❌ Forward DNS lookup failed for ${device.ip}: ${error.message}`);
+    }
+  }
+
+  // Fallback hostname for IP Phone devices
+  if (hostname === "Unknown" && type === "IP Phone" && device.ip && device.ip !== "Unknown") {
+    hostname = "IP-Phone-" + device.ip.replace(/\./g, '-');
+    console.log(`📞 Assigned fallback hostname for IP Phone: ${hostname}`);
+  }
+
   return {
     ip: device.ip || "Unknown",
     mac: device.mac ? normalizeMac(device.mac) : "Unknown",
     alive: device.alive || false,
-    hostname: device.hostname || "Unknown",
+    hostname,
     vendor,
     type,
     openPorts: device.openPorts || [],
