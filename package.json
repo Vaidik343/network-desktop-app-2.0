@@ -29,15 +29,23 @@
     "productName": "DC Scan Network",
     "files": [
       "**/*",
-      "assets/bootstrap/**/*",
+      "!dist-installer/**/*",
+      "!node_modules/**/*",
+      "node_modules/**/*",
+      "assets/**/*",
+      "assets/data/**/*",
       "assets/data/oui.txt",
-      "assets/"
+      "config/**/*",
+      "config/device-mappings.json"
     ],
     "asarUnpack": [
       "node_modules/oui/**/*",
       "node_modules/mac-lookup/**/*",
-      "assets/data/**/*"
-      
+      "assets/**/*",
+      "assets/data/**/*",
+      "assets/data/oui.txt",
+      "config/**/*",
+      "config/device-mappings.json"
     ],
     "directories": {
       "output": "dist-installer",

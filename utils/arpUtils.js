@@ -21,7 +21,12 @@ function loadOUIDatabase() {
       // Production path (unpacked from ASAR)
       path.join(process.resourcesPath, "assets/data/oui.txt"),
       // Alternative production path
-      path.join(process.resourcesPath, "app.asar.unpacked", "assets", "data", "oui.txt")
+      path.join(process.resourcesPath, "app.asar.unpacked", "assets", "data", "oui.txt"),
+      // Additional paths for different build configurations
+      path.join(process.resourcesPath, "app", "assets", "data", "oui.txt"),
+      // Try relative to the main process file
+      path.join(path.dirname(process.execPath), "resources", "assets", "data", "oui.txt"),
+      path.join(path.dirname(process.execPath), "assets", "data", "oui.txt")
     );
   }
 

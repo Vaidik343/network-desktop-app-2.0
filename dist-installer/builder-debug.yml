@@ -1,12 +1,17 @@
 x64:
   firstOrDefaultFilePatterns:
     - '**/*'
-    - '!**/node_modules/**'
     - '!assets{,/**/*}'
     - '!dist-installer{,/**/*}'
-    - assets/bootstrap/**/*
+    - '!dist-installer/**/*'
+    - '!node_modules/**/*'
+    - '!**/node_modules/**'
+    - node_modules/**/*
+    - assets/**/*
+    - assets/data/**/*
     - assets/data/oui.txt
-    - assets/
+    - config/**/*
+    - config/device-mappings.json
     - package.json
     - '!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts,mk,a,o,obj,forge-meta,pdb}'
     - '!**/._*'
@@ -18,9 +23,14 @@ x64:
   nodeModuleFilePatterns:
     - '**/*'
     - '**/*'
-    - assets/bootstrap/**/*
+    - '!dist-installer/**/*'
+    - '!node_modules/**/*'
+    - node_modules/**/*
+    - assets/**/*
+    - assets/data/**/*
     - assets/data/oui.txt
-    - assets/
+    - config/**/*
+    - config/device-mappings.json
 nsis:
   script: |-
     !include "C:\Vaidik\Desktop\DC scan network\node_modules\app-builder-lib\templates\nsis\include\StdUtils.nsh"
@@ -96,8 +106,8 @@ nsis:
       !insertmacro MUI_LANGUAGE "Vietnamese"
     !macroend
 
-    !include "C:\Users\BBCSPL\AppData\Local\Temp\t-3tvjY4\2-messages.nsh"
-    !include "C:\Users\BBCSPL\AppData\Local\Temp\t-3tvjY4\3-messages.nsh"
+    !include "C:\Users\BBCSPL\AppData\Local\Temp\t-ZEp3bN\2-messages.nsh"
+    !include "C:\Users\BBCSPL\AppData\Local\Temp\t-ZEp3bN\3-messages.nsh"
     !addplugindir /x86-unicode "C:\Users\BBCSPL\AppData\Local\electron-builder\Cache\nsis\nsis-resources-3.4.1\plugins\x86-unicode"
 
     Var newStartMenuLink

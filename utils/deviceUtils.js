@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const dns = require('dns').promises;
 const http = require('http');
+const ping = require("ping");
 
 // 🔧 Configurable device type mappings
 const DEVICE_TYPE_MAPPINGS = {
@@ -168,9 +169,24 @@ function inferDeviceTypeFromVendor(vendor) {
   return "Unknown";
 }
 
-// 🌐 Enrich device with ping, hostname, vendor, type
 async function enrichDevice(device) {
   const vendor = lookupVendor(device.mac) || "Unknown";
+  let alive = device.alive;
+  let responseTime = device.responseTime || "unknown";
+
+  // Ping device if alive status is not already true
+  if (alive !== true && device.ip) {
+    try {
+      const pingResult = await ping.promise.probe(device.ip, { timeout: 2 });
+      alive = pingResult.alive;
+      responseTime = pingResult.time;
+    } catch (error) {
+      console.log(`❌ Ping failed for ${device.ip}: ${error.message}`);
+      alive = false;
+      responseTime = "unknown";
+    }
+  }
+
   const type = detectDeviceType(device.mac, vendor);
 
   // Try to resolve hostname if not available
@@ -210,12 +226,12 @@ async function enrichDevice(device) {
   return {
     ip: device.ip || "Unknown",
     mac: device.mac ? normalizeMac(device.mac) : "Unknown",
-    alive: device.alive || false,
+    alive,
     hostname,
     vendor,
     type,
     openPorts: device.openPorts || [],
-    responseTime: device.responseTime || "unknown",
+    responseTime,
   };
 }
 
@@ -233,17 +249,47 @@ function addPatternMapping(pattern, deviceType) {
 
 // 🔄 Load device type mappings from external JSON file (dynamic option)
 function loadDeviceMappingsFromFile(filePath = './config/device-mappings.json') {
-  try {
-    if (fs.existsSync(filePath)) {
-      const mappings = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      Object.assign(DEVICE_TYPE_MAPPINGS.vendor, mappings.vendor || {});
-      Object.assign(DEVICE_TYPE_MAPPINGS.patterns, mappings.patterns || {});
-      console.log(`✅ Loaded device mappings from ${filePath}`);
-      return true;
-    }
-  } catch (error) {
-    console.error(`❌ Error loading device mappings from ${filePath}:`, error.message);
+  // Try multiple possible locations for the config file
+  const possiblePaths = [
+    // Development path
+    path.join(__dirname, "../config/device-mappings.json"),
+    // Fallback path
+    path.join(process.cwd(), "config/device-mappings.json"),
+    // Absolute path
+    filePath
+  ];
+
+  // Add Electron-specific paths only if running in Electron
+  if (process.versions && process.versions.electron) {
+    possiblePaths.push(
+      // Production path (unpacked from ASAR)
+      path.join(process.resourcesPath, "config/device-mappings.json"),
+      // Alternative production path
+      path.join(process.resourcesPath, "app.asar.unpacked", "config", "device-mappings.json"),
+      // Additional paths for different build configurations
+      path.join(process.resourcesPath, "app", "config", "device-mappings.json"),
+      // Try relative to the main process file
+      path.join(path.dirname(process.execPath), "resources", "config", "device-mappings.json"),
+      path.join(path.dirname(process.execPath), "config", "device-mappings.json")
+    );
   }
+
+  for (const configPath of possiblePaths) {
+    try {
+      console.log("🔍 Checking config file at:", configPath);
+      if (fs.existsSync(configPath)) {
+        const mappings = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        Object.assign(DEVICE_TYPE_MAPPINGS.vendor, mappings.vendor || {});
+        Object.assign(DEVICE_TYPE_MAPPINGS.patterns, mappings.patterns || {});
+        console.log(`✅ Loaded device mappings from ${configPath}`);
+        return true;
+      }
+    } catch (error) {
+      console.error(`❌ Error loading device mappings from ${configPath}:`, error.message);
+    }
+  }
+
+  console.warn("⚠️ Config file not found in any of the expected locations");
   return false;
 }
 
