@@ -2,6 +2,7 @@
 const scanBtn = document.getElementById("scanBtn");
 const excelBtn = document.getElementById("excelBtn");
 const searchInput = document.getElementById("searchInput");
+const deviceTypeFilter = document.getElementById("deviceTypeFilter");
 const cardContainer = document.getElementById("card-container");
 const emptyMessage = document.getElementById("emptyMessage");
 const modalBody = document.getElementById("deviceModalBody");
@@ -370,17 +371,42 @@ async function handleFetch(deviceOrIp) {
 let currentData = [];
 let currentView = localStorage.getItem("viewMode") || "card";
 
+// 🔄 Populate Device Type Filter
+function populateDeviceTypeFilter(devices) {
+  const uniqueTypes = new Set();
+
+  // Collect unique device types
+  devices.forEach(device => {
+    if (device.type && device.type.trim() !== '') {
+      uniqueTypes.add(device.type.toLowerCase());
+    } else {
+      uniqueTypes.add('unknown');
+    }
+  });
+
+  // Clear existing options except "All Device Types"
+  deviceTypeFilter.innerHTML = '<option value="">All Device Types</option>';
+
+  // Add unique types as options
+  Array.from(uniqueTypes).sort().forEach(type => {
+    const option = document.createElement('option');
+    option.value = type;
+    option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    deviceTypeFilter.appendChild(option);
+  });
+}
+
 // 🔄 View Toggle
 cardBtn.addEventListener("click", () => {
   currentView = "card";
   updateViewToggle();
-  renderDevices(currentData);
+  applyFilters();
 });
 
 tableBtn.addEventListener("click", () => {
   currentView = "table";
   updateViewToggle();
-  renderDevices(currentData);
+  applyFilters();
 });
 
 function updateViewToggle() {
@@ -543,9 +569,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     const devices = await window.api.scanDevices();
     console.log("Scan completed, devices found:", devices.length);
     console.log("Sample device:", devices[0]);
-    
+
     currentData = devices;
     window.currentData = devices;
+    populateDeviceTypeFilter(devices);
     updateViewToggle();
     renderDevices(devices);
   } catch (err) {
@@ -563,6 +590,7 @@ scanBtn.addEventListener("click", async () => {
     const devices = await window.api.scanDevices();
     currentData = devices;
     window.currentData = devices;
+    populateDeviceTypeFilter(devices);
     renderDevices(devices);
   } catch (err) {
     console.error("Scan failed:", err);
@@ -573,27 +601,56 @@ scanBtn.addEventListener("click", async () => {
   }
 });
 
-// 🔍 Search Filter
-searchInput.addEventListener("input", () => {
+// 🔍 Combined Filter Function
+function applyFilters() {
   const query = searchInput.value.toLowerCase();
-  const filtered = currentData.filter(
-    (d) =>
+  const selectedType = deviceTypeFilter.value.toLowerCase();
+
+  const filtered = currentData.filter((d) => {
+    // Search filter (IP, MAC, hostname)
+    const matchesSearch =
       d.ip.toLowerCase().includes(query) ||
       d.mac?.toLowerCase().includes(query) ||
-      d.hostname?.toLowerCase().includes(query)
-  );
+      d.hostname?.toLowerCase().includes(query);
+
+    // Device type filter
+    const matchesType = selectedType === "" || (d.type || "unknown").toLowerCase() === selectedType;
+
+    return matchesSearch && matchesType;
+  });
+
   renderDevices(filtered);
-});
+
+  // Show message if no devices match the filter
+  if (filtered.length === 0 && currentData.length > 0) {
+    emptyMessage.textContent = "No devices match the current filters.";
+    emptyMessage.style.display = "block";
+  }
+}
+
+// 🔍 Search Filter
+searchInput.addEventListener("input", applyFilters);
+
+// 📋 Device Type Filter
+deviceTypeFilter.addEventListener("change", applyFilters);
 
 // 📁 Export to Excel
 excelBtn.addEventListener("click", async () => {
   const query = searchInput.value.toLowerCase();
-  const filtered = currentData.filter(
-    (d) =>
+  const selectedType = deviceTypeFilter.value.toLowerCase();
+
+  const filtered = currentData.filter((d) => {
+    // Search filter (IP, MAC, hostname)
+    const matchesSearch =
       d.ip.toLowerCase().includes(query) ||
       d.mac?.toLowerCase().includes(query) ||
-      d.hostname?.toLowerCase().includes(query)
-  );
+      d.hostname?.toLowerCase().includes(query);
+
+    // Device type filter
+    const matchesType = selectedType === "" || (d.type || "unknown").toLowerCase() === selectedType;
+
+    return matchesSearch && matchesType;
+  });
 
   if (filtered.length === 0) {
     alert("No matching devices to export.");

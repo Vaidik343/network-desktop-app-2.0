@@ -44,9 +44,22 @@
             <button id="scanBtn" class="btn btn-primary ">Scan Network</button>
             <button id="excelBtn" class="btn btn-success">Export to Excel</button>
           </div>
-          <form id="searchForm" class="mb-3">
-            <input id="searchInput" type="text" class="form-control" placeholder="Search IP / MAC">
-          </form>
+          <div class="d-flex gap-2 mb-3">
+            <form id="searchForm" class="flex-grow-1">
+              <input id="searchInput" type="text" class="form-control" placeholder="Search IP / MAC">
+            </form>
+            <select id="deviceTypeFilter" class="form-select" style="width: 200px;">
+              <option value="">All Device Types</option>
+              <option value="ip phone">IP Phone</option>
+              <option value="camera">Camera</option>
+              <option value="speaker">Speaker</option>
+              <option value="switch">Switch</option>
+              <option value="router">Router</option>
+              <option value="computer">Computer</option>
+              <option value="printer">Printer</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
 
         </div>
         <div id="card-container" class="row g-2">
