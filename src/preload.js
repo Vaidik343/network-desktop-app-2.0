@@ -20,5 +20,11 @@ contextBridge.exposeInMainWorld("api", {
   fetchAllAcountInformation: (ip) => ipcRenderer.invoke("fetch-all-account-info", ip),
   fetchRestart: (ip) => ipcRenderer.invoke("fetch-restart", ip),
   fetchReset: (ip) => ipcRenderer.invoke("fetch-reset", ip),
-  fetchCall: (ip) => ipcRenderer.invoke("fetch-call", ip)
+  fetchCall: (ip) => ipcRenderer.invoke("fetch-call", ip),
+ // Speaker API
+ speakerLogin: (ip, username, password) =>
+    ipcRenderer.invoke("speaker-login", ip, username, password),
+
+  speakerApi: (ip, token, endpoint, method = "GET", body = null) =>
+    ipcRenderer.invoke("speaker-api", ip, token, endpoint, method, body)
 });

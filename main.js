@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const arpScan = require("./arpScanner");
 const exportToExcel = require("./excelFile");
-const { login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS, fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus, fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall, speakerApi } = require("./api/dasscomClient");
+const { login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS, fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus, fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall } = require("./api/dasscomClient");
 const preloadPath = path.join(__dirname, "src", "preload.js");
 
 console.log("Loaded main.js from:", __filename);
@@ -230,77 +230,40 @@ ipcMain.handle("fetch-call", async (event, ip) => {
   }
 });
 
-// 🎵 Speaker API handlers
-ipcMain.handle("start-play", async (event, ip, playId, volume, repeat) => {
+// 🎵 Speaker API handlers using proper dasscomClient functions
+const { speakerLogin, speakerApi } = require("./api/dasscomClient");
+
+// Store tokens per IP
+const deviceTokens = {};
+
+ipcMain.handle("speaker-login", async (event, ip, username = "admin", password = "admin") => {
   try {
-    const result = await speakerApi.startPlay(ip, playId, volume, repeat);
-    return result;
-  } catch (error) {
-    console.error("Start play failed:", error);
-    throw error;
+    console.log(`🎵 Attempting speaker login for ${ip} with ${username}:${password}`);
+    const token = await speakerLogin(ip, username, password);
+    deviceTokens[ip] = token; // store token
+    console.log(`✅ Stored token for ${ip}:`, token);
+    return token;
+  } catch (err) {
+    console.error(`❌ speakerLogin error for ${ip}:`, err.message);
+    throw err;
   }
 });
 
-ipcMain.handle("stop-play", async (event, ip) => {
+// Use the proper speakerApi function from dasscomClient.js
+ipcMain.handle("speaker-api", async (event, ip, token, endpoint, method = "GET", body = null) => {
   try {
-    const result = await speakerApi.stopPlay(ip);
+    if (!token) throw new Error("No token provided for speaker API call.");
+
+    console.log(`🎵 Making speaker API call to ${ip}${endpoint} with token:`, token.substring(0, 20) + "...");
+
+    const result = await speakerApi(ip, endpoint, method, body); // ✅ correct order - token is handled internally
+    console.log(`✅ Speaker API call successful for ${endpoint}`);
     return result;
-  } catch (error) {
-    console.error("Stop play failed:", error);
-    throw error;
+  } catch (err) {
+    console.error(`❌ Speaker API error (${endpoint}):`, err.message);
+    throw err;
   }
 });
-
-ipcMain.handle("start-url-play", async (event, ip, url, duration, volume) => {
-  try {
-    const result = await speakerApi.startUrlPlay(ip, url, duration, volume);
-    return result;
-  } catch (error) {
-    console.error("Start URL play failed:", error);
-    throw error;
-  }
-});
-
-ipcMain.handle("stop-url-play", async (event, ip) => {
-  try {
-    const result = await speakerApi.stopUrlPlay(ip);
-    return result;
-  } catch (error) {
-    console.error("Stop URL play failed:", error);
-    throw error;
-  }
-});
-
-ipcMain.handle("make-call", async (event, ip, phoneNumber, line) => {
-  try {
-    const result = await speakerApi.call(ip, phoneNumber, line);
-    return result;
-  } catch (error) {
-    console.error("Make call failed:", error);
-    throw error;
-  }
-});
-
-ipcMain.handle("answer-call", async (event, ip) => {
-  try {
-    const result = await speakerApi.answer(ip);
-    return result;
-  } catch (error) {
-    console.error("Answer call failed:", error);
-    throw error;
-  }
-});
-
-ipcMain.handle("hangup-call", async (event, ip) => {
-  try {
-    const result = await speakerApi.hangup(ip);
-    return result;
-  } catch (error) {
-    console.error("Hangup call failed:", error);
-    throw error;
-  }
-});
-
 
 
 

@@ -1,6 +1,6 @@
 const { shell } = require("electron"); // add this at the top
-
-
+const deviceTokens = {};
+// const fetch = require("node-fetch")
 //login
 async function login(ip, username, password) {
   console.log("🚀 ~ login ~ login:", ip, username);
@@ -635,4 +635,66 @@ async function fetchCall(ip) {
 }
 
 
-module.exports = { login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS,  fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus,  fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall};
+
+//speaker
+async function speakerLogin(ip, username = "admin", password = "admin") {
+  const url = `http://${ip}/api/login`;
+  console.log("🚀 ~ speakerLogin ~ url:", url)
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ username, password })
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Login failed: ${res.status} ${res.statusText} | ${text}`);
+  }
+
+  const data = await res.json();
+  console.log("🚀 ~ speakerLogin ~ data:", data)
+  const token = data.data?.token;
+  console.log("🚀 ~ speakerLogin ~ token:", token)
+  if (!token) throw new Error("Login succeeded but no token returned");
+
+  deviceTokens[ip] = token; // store for future API calls
+  console.log(`✅ Stored token for ${ip}: ${token}`);
+  return token;
+}
+
+// Generic API call using stored token
+async function speakerApi(ip, endpoint, method = "GET", body = null) {
+  console.log("🚀 ~ speakerApi ~ speakerApi:", speakerApi)
+  const token = deviceTokens[ip];
+  if (!token) throw new Error("No token found. Please login first.");
+
+  const url = `http://${ip}${endpoint}`;
+  console.log("🚀 ~ speakerApi ~ url:", url)
+  console.log(`🎵 speakerApi request to ${url} with token: ${token.substring(0, 20)}...`);
+
+  const res = await fetch(url, {
+    method,
+    headers: {
+      "Authorization": token,    // <-- raw token, no 'Bearer '
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  console.log("🚀 ~ speakerApi ~ res:", res)
+
+  console.log("🎵 speakerApi response status:", res.status, res.statusText);
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API request failed (${endpoint}): ${res.status} ${res.statusText} | ${text}`);
+  }
+
+  return res.json();
+}
+
+
+module.exports = {speakerApi, speakerLogin,login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS,  fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus,  fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall};
