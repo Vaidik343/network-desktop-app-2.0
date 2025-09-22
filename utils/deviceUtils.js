@@ -60,7 +60,11 @@ const DEVICE_TYPE_MAPPINGS = {
     'marvell': 'Marvell Device',
     'texas instruments': 'Texas Instruments Device',
     'infineon': 'Infineon Device',
-    'nvidia': 'NVIDIA Device'
+    'nvidia': 'NVIDIA Device',
+    'dasscom': 'Speaker',
+    'ieee registration authority': 'Speaker',
+    'xi\'an jizhong digital communication co.,ltd': 'Speaker',
+    'xi\'an jizhong': 'Speaker'
   },
   
   // Pattern-based mappings (for unknown vendors)
@@ -193,7 +197,7 @@ async function enrichDevice(device) {
   let hostname = device.hostname || "Unknown";
   if (hostname === "Unknown" && device.ip && device.ip !== "Unknown") {
     try {
-      console.log(`🔍 Attempting reverse DNS lookup for ${device.ip}`);
+      // console.log(`🔍 Attempting reverse DNS lookup for ${device.ip}`);
       const hostnames = await dns.reverse(device.ip);
       hostname = hostnames[0] || "Unknown";
       console.log(`✅ Reverse DNS resolved ${device.ip} to ${hostname}`);
@@ -206,7 +210,7 @@ async function enrichDevice(device) {
   // If still unknown, try forward DNS lookup (resolve IP to hostname)
   if (hostname === "Unknown" && device.ip && device.ip !== "Unknown") {
     try {
-      console.log(`🔍 Attempting forward DNS lookup for ${device.ip}`);
+      // console.log(`🔍 Attempting forward DNS lookup for ${device.ip}`);
       const lookupResult = await dns.lookup(device.ip);
       if (lookupResult && lookupResult.hostname) {
         hostname = lookupResult.hostname;

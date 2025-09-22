@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const path = require("path");
 const arpScan = require("./arpScanner");
 const exportToExcel = require("./excelFile");
-const { login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS, fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus, fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall } = require("./api/dasscomClient");
+const { login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS, fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus, fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall, speakerApi } = require("./api/dasscomClient");
 const preloadPath = path.join(__dirname, "src", "preload.js");
 
 console.log("Loaded main.js from:", __filename);
@@ -59,7 +59,26 @@ ipcMain.handle("export-excel", async (event, devices) => {
 ipcMain.on("open-ip", async (event, ip) => {
   const res = await ping.promise.probe(ip);
   if (res.alive) {
-    shell.openExternal(`http://${ip}`);
+    // Call login instead of opening browser
+    const loginResult = await login(ip, 'admin', 'admin');
+    console.log("Login result from IP click:", loginResult);
+
+    // Show popup based on login result
+    if (loginResult && loginResult.loginSuccess) {
+      dialog.showMessageBox(null, {
+        type: 'info',
+        title: 'Login Successful',
+        message: `✅ Login successful for ${ip}! Session established.`,
+        buttons: ['OK']
+      });
+    } else {
+      dialog.showMessageBox(null, {
+        type: 'warning',
+        title: 'Login Failed',
+        message: `❌ Login failed for ${ip}. ${loginResult?.error || 'Please check device connectivity.'}`,
+        buttons: ['OK']
+      });
+    }
   } else {
     dialog.showErrorBox("Device Unreachable", `Cannot reach ${ip}.`);
   }
@@ -207,6 +226,77 @@ ipcMain.handle("fetch-call", async (event, ip) => {
     return call;
   } catch (error) {
     console.error("Call fetch failed:", error);
+    throw error;
+  }
+});
+
+// 🎵 Speaker API handlers
+ipcMain.handle("start-play", async (event, ip, playId, volume, repeat) => {
+  try {
+    const result = await speakerApi.startPlay(ip, playId, volume, repeat);
+    return result;
+  } catch (error) {
+    console.error("Start play failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("stop-play", async (event, ip) => {
+  try {
+    const result = await speakerApi.stopPlay(ip);
+    return result;
+  } catch (error) {
+    console.error("Stop play failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("start-url-play", async (event, ip, url, duration, volume) => {
+  try {
+    const result = await speakerApi.startUrlPlay(ip, url, duration, volume);
+    return result;
+  } catch (error) {
+    console.error("Start URL play failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("stop-url-play", async (event, ip) => {
+  try {
+    const result = await speakerApi.stopUrlPlay(ip);
+    return result;
+  } catch (error) {
+    console.error("Stop URL play failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("make-call", async (event, ip, phoneNumber, line) => {
+  try {
+    const result = await speakerApi.call(ip, phoneNumber, line);
+    return result;
+  } catch (error) {
+    console.error("Make call failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("answer-call", async (event, ip) => {
+  try {
+    const result = await speakerApi.answer(ip);
+    return result;
+  } catch (error) {
+    console.error("Answer call failed:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("hangup-call", async (event, ip) => {
+  try {
+    const result = await speakerApi.hangup(ip);
+    return result;
+  } catch (error) {
+    console.error("Hangup call failed:", error);
     throw error;
   }
 });
