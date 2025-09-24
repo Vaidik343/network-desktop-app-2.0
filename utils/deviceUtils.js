@@ -2,12 +2,13 @@ const { lookupVendor, normalizeMac } = require("./arpUtils");
 const fs = require('fs');
 const path = require('path');
 const dns = require('dns').promises;
-const http = require('http');
 const ping = require("ping");
+
+// Dasscom special handling
+const { detectDasscomDeviceType } = require('./dasscomUtils');
 
 // 🔧 Configurable device type mappings
 const DEVICE_TYPE_MAPPINGS = {
-  // Vendor-specific mappings
   vendor: {
     'apple': 'Phone / Tablet',
     'iphone': 'Phone / Tablet', 
@@ -62,12 +63,10 @@ const DEVICE_TYPE_MAPPINGS = {
     'infineon': 'Infineon Device',
     'nvidia': 'NVIDIA Device',
     'dasscom': 'Speaker',
-    'ieee registration authority': 'Speaker',
-    'xi\'an jizhong digital communication co.,ltd': 'Speaker',
-    'xi\'an jizhong': 'Speaker'
+    "xi'an jizhong": 'Speaker',
+    "xi'an jizhong digital communication co.,ltd": 'Speaker',
+    'ieee registration authority': 'Speaker'
   },
-  
-  // Pattern-based mappings (for unknown vendors)
   patterns: {
     'router|gateway|access point': 'Network Device',
     'camera|surveillance|dvr|nvr': 'IP Camera',
@@ -78,8 +77,6 @@ const DEVICE_TYPE_MAPPINGS = {
     'iot|smart|home|hub': 'Smart Home',
     'server|storage|nas': 'Server / Storage'
   },
-  
-  // Category-based mappings (broad categories)
   categories: {
     'networking': 'Network Device',
     'computing': 'Computer',
@@ -92,139 +89,77 @@ const DEVICE_TYPE_MAPPINGS = {
   }
 };
 
-// 🔍 Enhanced device type detection with multiple fallback strategies
-function detectDeviceType(mac, vendor) {
+// 🔍 Enhanced device type detection
+function detectDeviceType(mac, vendor, openPorts = []) {
   const v = (vendor || "Unknown").toLowerCase();
-  
   if (v === "unknown") return "Unknown";
-  
-  // 1. First try exact vendor name matching
+
+  // Special Dasscom handling (fallback if API not used)
+  if (v.includes("dasscom speaker")) return "Speaker";
+  if (v.includes("dasscom ip phone") || v.includes("dasscom voip phone")) return "IP Phone";
+
+  // Exact match
   for (const [vendorPattern, deviceType] of Object.entries(DEVICE_TYPE_MAPPINGS.vendor)) {
-    if (v === vendorPattern.toLowerCase()) {
-      return deviceType;
-    }
+    if (v === vendorPattern.toLowerCase()) return deviceType;
   }
-  
-  // 2. Try vendor substring matching (more flexible)
+
+  // Substring match
   for (const [vendorPattern, deviceType] of Object.entries(DEVICE_TYPE_MAPPINGS.vendor)) {
-    if (v.includes(vendorPattern.toLowerCase())) {
-      console.log(`🔍 Matched vendor substring: "${vendorPattern}" -> "${deviceType}"`);
-      return deviceType;
-    }
+    if (v.includes(vendorPattern.toLowerCase())) return deviceType;
   }
-  
-  // 3. Try pattern matching in vendor string
+
+  // Pattern match
   for (const [pattern, deviceType] of Object.entries(DEVICE_TYPE_MAPPINGS.patterns)) {
     const regex = new RegExp(pattern, 'i');
-    if (regex.test(v)) {
-      console.log(`🔍 Matched pattern: "${pattern}" -> "${deviceType}"`);
-      return deviceType;
-    }
+    if (regex.test(v)) return deviceType;
   }
-  
-  // 4. Try to infer from common vendor patterns
-  const inferredType = inferDeviceTypeFromVendor(v);
-  if (inferredType !== "Unknown") {
-    console.log(`🔍 Inferred type from vendor: "${v}" -> "${inferredType}"`);
-    return inferredType;
-  }
-  
-  // 5. Log unknown vendor for future analysis
-  console.log(`❓ Unknown vendor detected: "${vendor}" (MAC: ${mac})`);
-  
+
   return "Unknown";
 }
 
-// 🔮 Infer device type based on vendor name patterns
-function inferDeviceTypeFromVendor(vendor) {
-  const vendorLower = vendor.toLowerCase();
-  
-  // Common vendor patterns that suggest device type
-  if (vendorLower.includes('systems') || vendorLower.includes('technologies') || 
-      vendorLower.includes('electronics') || vendorLower.includes('corporation') ||
-      vendorLower.includes('inc') || vendorLower.includes('llc') || vendorLower.includes('ltd')) {
-    // These are usually companies that make various devices, so we need more context
-    return "Unknown";
-  }
-  
-  // Look for specific product indicators
-  if (vendorLower.includes('router') || vendorLower.includes('switch') || vendorLower.includes('ap')) {
-    return "Network Device";
-  }
-  if (vendorLower.includes('camera') || vendorLower.includes('surveillance')) {
-    return "IP Camera";
-  }
-  if (vendorLower.includes('phone') || vendorLower.includes('mobile')) {
-    return "Phone / Tablet";
-  }
-  if (vendorLower.includes('computer') || vendorLower.includes('pc') || vendorLower.includes('laptop')) {
-    return "Computer";
-  }
-  if (vendorLower.includes('printer') || vendorLower.includes('print')) {
-    return "Printer";
-  }
-  if (vendorLower.includes('tv') || vendorLower.includes('television')) {
-    return "TV / Display";
-  }
-  if (vendorLower.includes('smart') || vendorLower.includes('iot')) {
-    return "Smart Home";
-  }
-  
-  return "Unknown";
-}
-
-async function enrichDevice(device) {
+// 🌟 Main device enrichment
+async function enrichDevice(device, credentials = {}) {
   const vendor = lookupVendor(device.mac) || "Unknown";
   let alive = device.alive;
   let responseTime = device.responseTime || "unknown";
 
-  // Ping device if alive status is not already true
-  if (alive !== true && device.ip) {
+  // Ping if not alive
+  if (!alive && device.ip) {
     try {
       const pingResult = await ping.promise.probe(device.ip, { timeout: 2 });
       alive = pingResult.alive;
       responseTime = pingResult.time;
-    } catch (error) {
-      console.log(`❌ Ping failed for ${device.ip}: ${error.message}`);
+    } catch {
       alive = false;
       responseTime = "unknown";
     }
   }
 
-  const type = detectDeviceType(device.mac, vendor);
+  // Scan open ports if not provided
+  let openPorts = device.openPorts || [];
+  if (openPorts.length === 0 && device.ip && device.ip !== "Unknown") {
+    const { scanPorts } = require("../arpScanner");
+    openPorts = await scanPorts(device.ip);
+  }
 
-  // Try to resolve hostname if not available
+  // Dasscom device check via login API
+  let type;
+  if (vendor.toLowerCase().includes("dasscom") || vendor.toLowerCase().includes("xi'an jizhong")) {
+    type = await detectDasscomDeviceType(device.ip, credentials);
+  }
+
+  // Fallback type detection
+  if (!type || type === "Unknown") {
+    type = detectDeviceType(device.mac, vendor, openPorts);
+  }
+
+  // Hostname resolution
   let hostname = device.hostname || "Unknown";
   if (hostname === "Unknown" && device.ip && device.ip !== "Unknown") {
     try {
-      // console.log(`🔍 Attempting reverse DNS lookup for ${device.ip}`);
       const hostnames = await dns.reverse(device.ip);
       hostname = hostnames[0] || "Unknown";
-      console.log(`✅ Reverse DNS resolved ${device.ip} to ${hostname}`);
-    } catch (error) {
-      console.log(`❌ Reverse DNS lookup failed for ${device.ip}: ${error.message}`);
-      hostname = "Unknown";
-    }
-  }
-
-  // If still unknown, try forward DNS lookup (resolve IP to hostname)
-  if (hostname === "Unknown" && device.ip && device.ip !== "Unknown") {
-    try {
-      // console.log(`🔍 Attempting forward DNS lookup for ${device.ip}`);
-      const lookupResult = await dns.lookup(device.ip);
-      if (lookupResult && lookupResult.hostname) {
-        hostname = lookupResult.hostname;
-        console.log(`✅ Forward DNS resolved ${device.ip} to ${hostname}`);
-      }
-    } catch (error) {
-      console.log(`❌ Forward DNS lookup failed for ${device.ip}: ${error.message}`);
-    }
-  }
-
-  // Fallback hostname for IP Phone devices
-  if (hostname === "Unknown" && type === "IP Phone" && device.ip && device.ip !== "Unknown") {
-    hostname = "IP-Phone-" + device.ip.replace(/\./g, '-');
-    console.log(`📞 Assigned fallback hostname for IP Phone: ${hostname}`);
+    } catch {}
   }
 
   return {
@@ -234,147 +169,54 @@ async function enrichDevice(device) {
     hostname,
     vendor,
     type,
-    openPorts: device.openPorts || [],
-    responseTime,
+    openPorts,
+    responseTime
   };
 }
 
-// 💾 Function to add new vendor mappings (for future extensibility)
-function addVendorMapping(vendorPattern, deviceType) {
-  DEVICE_TYPE_MAPPINGS.vendor[vendorPattern.toLowerCase()] = deviceType;
-  console.log(`✅ Added vendor mapping: "${vendorPattern}" -> "${deviceType}"`);
-}
-
-// 💾 Function to add new pattern mappings (for future extensibility)
-function addPatternMapping(pattern, deviceType) {
-  DEVICE_TYPE_MAPPINGS.patterns[pattern] = deviceType;
-  console.log(`✅ Added pattern mapping: "${pattern}" -> "${deviceType}"`);
-}
-
-// 🔄 Load device type mappings from external JSON file (dynamic option)
+// Load mappings from external JSON
 function loadDeviceMappingsFromFile(filePath = './config/device-mappings.json') {
-  // Try multiple possible locations for the config file
   const possiblePaths = [
-    // Development path
     path.join(__dirname, "../config/device-mappings.json"),
-    // Fallback path
     path.join(process.cwd(), "config/device-mappings.json"),
-    // Absolute path
     filePath
   ];
 
-  // Add Electron-specific paths only if running in Electron
-  if (process.versions && process.versions.electron) {
-    possiblePaths.push(
-      // Production path (unpacked from ASAR)
-      path.join(process.resourcesPath, "config/device-mappings.json"),
-      // Alternative production path
-      path.join(process.resourcesPath, "app.asar.unpacked", "config", "device-mappings.json"),
-      // Additional paths for different build configurations
-      path.join(process.resourcesPath, "app", "config", "device-mappings.json"),
-      // Try relative to the main process file
-      path.join(path.dirname(process.execPath), "resources", "config", "device-mappings.json"),
-      path.join(path.dirname(process.execPath), "config", "device-mappings.json")
-    );
-  }
-
   for (const configPath of possiblePaths) {
     try {
-      console.log("🔍 Checking config file at:", configPath);
       if (fs.existsSync(configPath)) {
         const mappings = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        Object.assign(DEVICE_TYPE_MAPPINGS.vendor, mappings.vendor || {});
+        for (const [k, v] of Object.entries(mappings.vendor || {})) {
+          if (!DEVICE_TYPE_MAPPINGS.vendor[k.toLowerCase()]) {
+            DEVICE_TYPE_MAPPINGS.vendor[k.toLowerCase()] = v;
+          }
+        }
         Object.assign(DEVICE_TYPE_MAPPINGS.patterns, mappings.patterns || {});
-        console.log(`✅ Loaded device mappings from ${configPath}`);
         return true;
       }
     } catch (error) {
-      console.error(`❌ Error loading device mappings from ${configPath}:`, error.message);
+      console.error(error.message);
     }
   }
 
-  console.warn("⚠️ Config file not found in any of the expected locations");
   return false;
 }
 
-// 💾 Save current mappings to external JSON file
-function saveDeviceMappingsToFile(filePath = './config/device-mappings.json') {
-  try {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(filePath, JSON.stringify(DEVICE_TYPE_MAPPINGS, null, 2));
-    console.log(`✅ Saved device mappings to ${filePath}`);
-    return true;
-  } catch (error) {
-    console.error(`❌ Error saving device mappings to ${filePath}:`, error.message);
-    return false;
-  }
+function addVendorMapping(vendorPattern, deviceType) {
+  DEVICE_TYPE_MAPPINGS.vendor[vendorPattern.toLowerCase()] = deviceType;
 }
 
-// 🤖 AI/ML-based device type prediction (placeholder for future implementation)
-async function predictDeviceTypeAI(mac, vendor, openPorts = []) {
-  // This is a placeholder for future AI/ML integration
-  // Could use machine learning to predict device type based on:
-  // - Vendor name patterns
-  // - MAC address patterns (OUI lookup)
-  // - Open ports and services
-  // - Network behavior patterns
-  
-  console.log(`🤖 AI prediction requested for: ${vendor} (MAC: ${mac})`);
-  
-  // Simple heuristic based on open ports as example
-  if (openPorts.includes(80) || openPorts.includes(443)) {
-    return "Web Server / Router";
-  }
-  if (openPorts.includes(554)) {
-    return "IP Camera / Streaming Device";
-  }
-  if (openPorts.includes(9100)) {
-    return "Printer";
-  }
-  
-  return "Unknown (AI)";
+function addPatternMapping(pattern, deviceType) {
+  DEVICE_TYPE_MAPPINGS.patterns[pattern] = deviceType;
 }
 
-// 🌐 Dynamic device type detection with multiple strategies
-async function detectDeviceTypeDynamic(mac, vendor, openPorts = []) {
-  const v = (vendor || "Unknown").toLowerCase();
-  
-  if (v === "unknown") return "Unknown";
-  
-  // 1. Try traditional static mappings first
-  const staticType = detectDeviceType(mac, vendor);
-  if (staticType !== "Unknown") {
-    return staticType;
-  }
-  
-  // 2. Try AI/ML prediction if available
-  try {
-    const aiType = await predictDeviceTypeAI(mac, vendor, openPorts);
-    if (aiType !== "Unknown (AI)") {
-      console.log(`🤖 AI predicted: "${vendor}" -> "${aiType}"`);
-      return aiType;
-    }
-  } catch (error) {
-    console.error('AI prediction failed:', error.message);
-  }
-  
-  // 3. Fallback to enhanced pattern matching
-  return detectDeviceType(mac, vendor);
-}
-
-// Load mappings from config file on module load
+// Load mappings on module load
 loadDeviceMappingsFromFile();
 
 module.exports = {
   enrichDevice,
   detectDeviceType,
-  detectDeviceTypeDynamic,
   addVendorMapping,
   addPatternMapping,
-  loadDeviceMappingsFromFile,
-  saveDeviceMappingsToFile,
-  predictDeviceTypeAI
+  loadDeviceMappingsFromFile
 };

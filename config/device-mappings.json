@@ -79,13 +79,16 @@
     "wyze": "Smart Home",
     "smartthings": "Smart Home Hub",
     "custom-device": "Custom IoT Device",
-    "dasscom": "Speaker",
-    "dasscom ip phone": "IP Phone",
-    "dasscom phone": "Speaker",
-    "dasscom voip": "Speaker",
-    "xi'an jizhong digital communication co.,ltd": "Speaker",
-    "xi'an jizhong": "Speaker",
-    "ieee registration authority": "Speaker"
+    "hubris technologies private limited": "IP Phone",
+    "hubris": "IP Phone",
+    "Hubris Technologies Private Limited": "IP Phone",
+"dasscom speaker": "Speaker",
+"dasscom ip phone": "IP Phone",
+"dasscom voip phone": "IP Phone",
+"xi'an jizhong digital communication co.,ltd": "Speaker",
+"xi'an jizhong": "Speaker",
+"ieee registration authority": "Speaker"
+
   },
   "patterns": {
     "router|gateway|access point": "Network Device",
