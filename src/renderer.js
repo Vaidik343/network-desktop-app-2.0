@@ -322,9 +322,9 @@ async function showDeviceDetails(device) {
         { name: "Gateway", icon: "🚪", fetch: () => window.api.fetchGetway(device.ip) },
         { name: "Netmask", icon: "📶", fetch: () => window.api.fetchNetMask(device.ip) },
         { name: "Account Status", icon: "👤", fetch: () => window.api.fetchAccountStatus(device.ip) },
-        { name: "Call Status", icon: "📞", fetch: () => window.api.fetchCallStatus(device.ip) },
+        // { name: "Call Status", icon: "📞", fetch: () => window.api.fetchCallStatus(device.ip) },
         { name: "All Account Information", icon: "📋", fetch: () => window.api.fetchAllAcountInformation(device.ip) },
-        { name: "Call", icon: "📞", fetch: () => window.api.fetchCall(device.ip) }
+        // { name: "Call", icon: "📞", fetch: () => window.api.fetchCall(device.ip) }
       ];
     } else if (deviceType === "Speaker") {
       apiCalls = [
@@ -358,7 +358,7 @@ async function showDeviceDetails(device) {
         <!-- Basic Information -->
         <div class="col-md-12 mb-4">
           <div class="card">
-            <div class="card-header text-white bg-primary">
+            <div class="card-header text-white ">
               <h6 class="mb-0">📋 Basic Information</h6>
             </div>
             <div class="card-body">
