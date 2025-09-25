@@ -200,6 +200,8 @@ body {
   height: 20px;
   animation-delay: 0s;
 }
+
+/* #3f1e85 */
 .circles li:nth-child(6) {
   left: 75%;
   width: 110px;
@@ -427,6 +429,8 @@ td{
 .wave:nth-child(3) {
   animation-duration: 50s;
 }
+
+
 
 @keyframes wave {
   0% {
