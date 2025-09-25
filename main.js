@@ -274,7 +274,7 @@ function createWindow() {
     height: 600,
     minWidth: 800,
     minHeight: 600,
-    icon: "C:\\Vaidik\\Desktop\\DC scan network\\assets\\dasscom\\favicon-32x32.png",
+    icon: "C:\\Vaidik\\Desktop\\DC scan network\\assets\\dasscom\\wifi.png",
     webPreferences: {
       contextIsolation: true,
       preload: preloadPath,

@@ -1,8 +1,8 @@
 version: 1.0.0
 files:
   - url: DC-Scan-Network-Setup-1.0.0.exe
-    sha512: mW5TPTCwjB8z0xWuHO/qlX43jsNKthyXkcoxAa52F36zk3KLuiKHeIaz81WIbOhFkLm41AvzIVe9KIn+9B5Eww==
-    size: 97402134
+    sha512: rfJsCZpiJBq1G9COoz0SLnB+xM1itvUqxFjS7oLMxn7rf29nzs/EMEKta9BgbxO9pu26X6KKWmaorcMbJRzB+w==
+    size: 97197318
 path: DC-Scan-Network-Setup-1.0.0.exe
-sha512: mW5TPTCwjB8z0xWuHO/qlX43jsNKthyXkcoxAa52F36zk3KLuiKHeIaz81WIbOhFkLm41AvzIVe9KIn+9B5Eww==
-releaseDate: '2025-09-02T09:25:03.132Z'
+sha512: rfJsCZpiJBq1G9COoz0SLnB+xM1itvUqxFjS7oLMxn7rf29nzs/EMEKta9BgbxO9pu26X6KKWmaorcMbJRzB+w==
+releaseDate: '2025-09-25T08:13:24.002Z'

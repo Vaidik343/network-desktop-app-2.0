@@ -78,21 +78,49 @@ async function scanPorts(ip, ports = [80, 443, 22, 23, 554, 3389, 9100, 5060, 50
 }
 
 // 🚀 Main scan function
-module.exports = function scanDevices({ useSubnetScan = false, ipAddr, netmask } = {}) {
-  console.log("🚀 ~ scanDevices ~ scanDevices:", scanDevices)
-  if (useSubnetScan && ipAddr && netmask) {
-    return scanSubnet(ipAddr, netmask);
+module.exports = async function scanDevices({ useSubnetScan = true, ipAddr, netmask } = {}) {
+  console.log("🚀 Starting device scan...");
+
+  // Try subnet scanning first (more reliable in packaged apps)
+  if (useSubnetScan) {
+    try {
+      console.log("🔍 Using subnet scanning method");
+      const subnetDevices = await scanSubnet(ipAddr, netmask);
+      console.log(`✅ Subnet scan found ${subnetDevices.length} devices`);
+
+      // Enrich devices with type detection
+      const devicesWithType = await Promise.all(subnetDevices.map(async device => {
+        const apiType = await determineDeviceType(device.ip);
+        if (apiType !== "Unknown") {
+          return { ...device, type: apiType };
+        }
+        return device;
+      }));
+
+      return devicesWithType;
+    } catch (subnetError) {
+      console.error("❌ Subnet scanning failed:", subnetError.message);
+      // Fall back to ARP scanning
+    }
   }
 
-  // fallback to ARP scan
+  // Fallback to ARP scan
+  console.log("🔍 Falling back to ARP scanning method");
   return new Promise((resolve, reject) => {
     const command = os.platform() === "win32" ? "arp -a" : "arp -n";
 
     exec(command, async (err, stdout) => {
-      if (err) return reject(err);
+      if (err) {
+        console.error("❌ ARP command failed:", err.message);
+        // If ARP also fails, return empty array instead of rejecting
+        console.log("⚠️ Both scanning methods failed, returning empty results");
+        return resolve([]);
+      }
 
       try {
         const rawDevices = parseARP(stdout);
+        console.log(`✅ ARP scan found ${rawDevices.length} raw devices`);
+
         const enrichedDevices = await Promise.all(rawDevices.map(device => enrichDevice(device, { username: "admin", password: "admin" })));
         const devicesWithType = await Promise.all(enrichedDevices.map(async device => {
           const apiType = await determineDeviceType(device.ip);
@@ -101,10 +129,12 @@ module.exports = function scanDevices({ useSubnetScan = false, ipAddr, netmask }
           }
           return device;
         }));
+
         resolve(devicesWithType);
       } catch (e) {
-        console.error("Error enriching devices:", e);
-        reject(e);
+        console.error("❌ Error enriching devices:", e);
+        // Return empty array instead of rejecting to prevent app crash
+        resolve([]);
       }
     });
   });

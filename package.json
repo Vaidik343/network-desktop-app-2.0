@@ -54,7 +54,7 @@
       "buildResources": "assets"
     },
     "win": {
-      "icon": "dasscom/favicon.ico",
+      "icon": "dasscom/wifi.ico",
       "target": [
         {
           "target": "nsis",
@@ -72,8 +72,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "DC Scan Network",
-      "installerIcon": "dasscom/favicon.ico",
-      "uninstallerIcon": "dasscom/favicon.ico"
+      "installerIcon": "dasscom/wifi.ico",
+      "uninstallerIcon": "dasscom/wifi.ico"
     }
   }
 }

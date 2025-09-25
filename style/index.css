@@ -33,6 +33,7 @@ tr {
   display: flex;
   flex-direction: row-reverse;
   justify-content: space-between;
+
 }
 .ip-cell {
   color: black !important;
@@ -429,7 +430,6 @@ td{
 .wave:nth-child(3) {
   animation-duration: 50s;
 }
-
 
 
 @keyframes wave {

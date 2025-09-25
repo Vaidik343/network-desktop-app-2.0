@@ -23,7 +23,7 @@ asarUnpack:
   - config/**/*
   - config/device-mappings.json
 win:
-  icon: dasscom/favicon.ico
+  icon: dasscom/wifi.png
   target:
     - target: nsis
       arch:
@@ -36,6 +36,6 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: DC Scan Network
-  installerIcon: dasscom/favicon.ico
-  uninstallerIcon: dasscom/favicon.ico
-electronVersion: 37.2.6
+  installerIcon: dasscom/wifi.png
+  uninstallerIcon: dasscom/wifi.png
+electronVersion: 37.5.1
