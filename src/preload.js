@@ -6,7 +6,8 @@ contextBridge.exposeInMainWorld("api", {
   openIP: (ip) => ipcRenderer.send("open-ip", ip),
   checkDeviceStatus: (ip) => ipcRenderer.invoke("check-device-status", ip),
   // API functions for device management
-  loginDevice: (ip, username, password) => ipcRenderer.invoke("login-device", ip, username, password),
+  login: (ip, username, password) => ipcRenderer.invoke("login-device", ip, username, password),
+  enrichDevice: (device, credentials) => ipcRenderer.invoke("enrich-device", device, credentials),
   fetchSystemInfo: (ip, token) => ipcRenderer.invoke("fetch-system-info", ip, token),
   // fetchExtensions: (ip, token) => ipcRenderer.invoke("fetch-extensions", ip, token),
   fetchSvnVersion: (ip) => ipcRenderer.invoke("fetch-svn-version", ip),
