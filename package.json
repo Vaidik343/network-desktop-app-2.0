@@ -8,7 +8,7 @@
     "build": "electron-builder"
   },
   "keywords": [],
-  "author": "",
+  "author": "Dasscom-Innovative Sound",
   "license": "ISC",
   "devDependencies": {
     "electron": "^37.2.6",
@@ -43,11 +43,13 @@
     "asarUnpack": [
       "node_modules/oui/**/*",
       "node_modules/mac-lookup/**/*",
-      "assets/**/*",
       "assets/data/**/*",
       "assets/data/oui.txt",
       "config/**/*",
       "config/device-mappings.json"
+    ],
+    "extraResources": [
+      "assets/nmap/**/*"
     ],
     "directories": {
       "output": "dist-installer",
@@ -63,7 +65,8 @@
           ]
         }
       ],
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": false,
@@ -73,7 +76,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "DC Scan Network",
       "installerIcon": "dasscom/wifi.ico",
-      "uninstallerIcon": "dasscom/wifi.ico"
+      "uninstallerIcon": "dasscom/wifi.ico",
+      "runAfterFinish": false
     }
   }
 }

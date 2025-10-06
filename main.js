@@ -4,11 +4,16 @@ const path = require("path");
 const arpScan = require("./arpScanner");
 const exportToExcel = require("./excelFile");
 const { login, fetchSystemInfo, fetchSvnVersion, fetchIpAddress, fetchAccountInfo, fetchDNS, fetchGetway, fetchNetMask, fetchAccountStatus, fetchCallStatus, fetchAllAcountInformation, fetchRestart, fetchReset, fetchCall } = require("./api/dasscomClient");
+
 const preloadPath = path.join(__dirname, "src", "preload.js");
+
+let win; // Declare win globally
 
 console.log("Loaded main.js from:", __filename);
 
 const ping = require("ping");
+
+
 
 // --- define FIRST ---
 async function pingDevice(ip) {
@@ -269,9 +274,9 @@ ipcMain.handle("speaker-api", async (event, ip, token, endpoint, method = "GET",
 
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+  win = new BrowserWindow({
+    width: 1500,
+    height: 650,
     minWidth: 800,
     minHeight: 600,
     icon: "C:\\Vaidik\\Desktop\\DC scan network\\assets\\dasscom\\wifi.png",

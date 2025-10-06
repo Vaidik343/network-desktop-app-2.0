@@ -14,6 +14,8 @@ let currentData = [];
 let currentView = localStorage.getItem("viewMode") || "card";
 const credentials = { username: "admin", password: "admin" }; // define at top
 
+
+
 // 🔄 View Toggle
 cardBtn.addEventListener("click", () => {
   currentView = "card";

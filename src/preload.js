@@ -27,5 +27,7 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.invoke("speaker-login", ip, username, password),
 
   speakerApi: (ip, token, endpoint, method = "GET", body = null) =>
-    ipcRenderer.invoke("speaker-api", ip, token, endpoint, method, body)
+    ipcRenderer.invoke("speaker-api", ip, token, endpoint, method, body),
+
+
 });
