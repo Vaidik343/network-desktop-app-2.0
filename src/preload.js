@@ -6,7 +6,7 @@ contextBridge.exposeInMainWorld("api", {
   openIP: (ip) => ipcRenderer.send("open-ip", ip),
   checkDeviceStatus: (ip) => ipcRenderer.invoke("check-device-status", ip),
   // API functions for device management
-  login: (ip, username, password) => ipcRenderer.invoke("login-device", ip, username, password),
+  loginDevice: (ip, username, password) => ipcRenderer.invoke("login-device", ip, username, password),
   enrichDevice: (device, credentials) => ipcRenderer.invoke("enrich-device", device, credentials),
   fetchSystemInfo: (ip, token) => ipcRenderer.invoke("fetch-system-info", ip, token),
   // fetchExtensions: (ip, token) => ipcRenderer.invoke("fetch-extensions", ip, token),
@@ -22,8 +22,8 @@ contextBridge.exposeInMainWorld("api", {
   fetchRestart: (ip) => ipcRenderer.invoke("fetch-restart", ip),
   fetchReset: (ip) => ipcRenderer.invoke("fetch-reset", ip),
   fetchCall: (ip) => ipcRenderer.invoke("fetch-call", ip),
- // Speaker API
- speakerLogin: (ip, username, password) =>
+  // Speaker API
+  speakerLogin: (ip, username, password) =>
     ipcRenderer.invoke("speaker-login", ip, username, password),
 
   speakerApi: (ip, token, endpoint, method = "GET", body = null) =>
